@@ -7,8 +7,25 @@ export const criarUsuario = async (req: Request, res: Response) => {
   try {
     const { nome, email, senha, tipo } = req.body;
 
-    if (!nome || !email || !senha) {
-      return res.status(400).json({ erro: "Preencha todos os campos" });
+    if (!nome || nome.length < 3) {
+      return res.status(400).json({ erro: "Nome inválido" });
+    }
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ erro: "Email inválido" });
+    }
+
+    if (!senha || senha.length < 6) {
+      return res
+        .status(400)
+        .json({ erro: "Senha deve ter no mínimo 6 caracteres" });
+    }
+
+    //Verifica se existe o e-mail
+    const usuarioExistente = await Usuario.findOne({ where: { email } });
+
+    if (usuarioExistente) {
+      return res.status(400).json({ erro: "Email já cadastrado" });
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
@@ -20,7 +37,14 @@ export const criarUsuario = async (req: Request, res: Response) => {
       tipo,
     });
 
-    res.status(201).json(usuario);
+    const usuarioSemSenha = {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      tipo: usuario.tipo,
+    };
+
+    res.status(201).json(usuarioSemSenha);
   } catch (error) {
     res.status(500).json({ erro: "Erro ao criar usuário" });
   }

@@ -6,10 +6,16 @@ export const criarCategoria = async (req: Request, res: Response) => {
   try {
     const { nome, descricao, sla_atendimento, sla_resolucao } = req.body;
 
-    if (!nome || !sla_atendimento || !sla_resolucao) {
-      return res
-        .status(400)
-        .json({ erro: "Campos obrigatórios não preenchidos" });
+    if (!nome || nome.length < 3) {
+      return res.status(400).json({ erro: "Nome inválido" });
+    }
+
+    if (!sla_atendimento || sla_atendimento <= 0) {
+      return res.status(400).json({ erro: "SLA atendimento inválido" });
+    }
+
+    if (!sla_resolucao || sla_resolucao <= 0) {
+      return res.status(400).json({ erro: "SLA resolução inválido" });
     }
 
     const categoria = await Categoria.create({

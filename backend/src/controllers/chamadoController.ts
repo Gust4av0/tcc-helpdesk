@@ -9,8 +9,20 @@ export const criarChamado = async (req: any, res: Response) => {
   try {
     const { titulo, descricao, categoria_id, prioridade } = req.body;
 
-    if (!titulo || !descricao || !categoria_id) {
-      return res.status(400).json({ erro: "Campos obrigatórios não preenchidos" });
+    if (!titulo || titulo.length < 5) {
+      return res.status(400).json({ erro: "Título deve ter no mínimo 5 caracteres" });
+    }
+
+    if (!descricao || descricao.length < 10) {
+      return res.status(400).json({ erro: "Descrição deve ter no mínimo 10 caracteres" });
+    }
+
+    if (!categoria_id) {
+      return res.status(400).json({ erro: "Categoria obrigatória" });
+    }
+
+    if (prioridade && !["BAIXA", "MEDIA", "ALTA", "URGENTE"].includes(prioridade)) {
+      return res.status(400).json({ erro: "Prioridade inválida" });
     }
 
     const categoria = await Categoria.findByPk(categoria_id);
@@ -22,13 +34,11 @@ export const criarChamado = async (req: any, res: Response) => {
     const agora = new Date();
 
     const prazo_atendimento = new Date(
-      agora.getTime() +
-        categoria.getDataValue("sla_atendimento") * 60 * 60 * 1000
+      agora.getTime() + categoria.getDataValue("sla_atendimento") * 3600000
     );
 
     const prazo_resolucao = new Date(
-      agora.getTime() +
-        categoria.getDataValue("sla_resolucao") * 60 * 60 * 1000
+      agora.getTime() + categoria.getDataValue("sla_resolucao") * 3600000
     );
 
     const chamado = await Chamado.create({
@@ -42,7 +52,6 @@ export const criarChamado = async (req: any, res: Response) => {
       status: "NOVO",
     });
 
-    // 🔥 LOG
     await registrarLog({
       chamado_id: chamado.id,
       status_anterior: null,
@@ -52,7 +61,6 @@ export const criarChamado = async (req: any, res: Response) => {
 
     return res.status(201).json(chamado);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ erro: "Erro ao criar chamado" });
   }
 };
@@ -122,16 +130,37 @@ export const atualizarChamado = async (req: any, res: Response) => {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
+    if (chamado.status === "FINALIZADO") {
+      return res.status(400).json({ erro: "Chamado já finalizado" });
+    }
+
+    const { titulo, descricao, status, prioridade } = req.body;
+
+    if (titulo && titulo.length < 5) {
+      return res.status(400).json({ erro: "Título inválido" });
+    }
+
+    if (descricao && descricao.length < 10) {
+      return res.status(400).json({ erro: "Descrição inválida" });
+    }
+
+    if (status && !["NOVO", "ATRIBUIDO", "EM_ATENDIMENTO", "FINALIZADO"].includes(status)) {
+      return res.status(400).json({ erro: "Status inválido" });
+    }
+
+    if (prioridade && !["BAIXA", "MEDIA", "ALTA", "URGENTE"].includes(prioridade)) {
+      return res.status(400).json({ erro: "Prioridade inválida" });
+    }
+
     const statusAnterior = chamado.status;
 
     await chamado.update(req.body);
 
-    // 🔥 LOG (só se status mudou)
-    if (req.body.status && req.body.status !== statusAnterior) {
+    if (status && status !== statusAnterior) {
       await registrarLog({
         chamado_id: chamado.id,
         status_anterior: statusAnterior,
-        status_novo: req.body.status,
+        status_novo: status,
         usuario_id: req.usuario.id,
       });
     }
