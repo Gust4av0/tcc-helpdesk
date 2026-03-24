@@ -6,13 +6,14 @@ import {
   atualizarUsuario,
   deletarUsuario,
 } from "../controllers/usuarioController";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.post("/", criarUsuario);
-router.get("/", listarUsuarios);
-router.get("/:id", buscarUsuario);
-router.put("/:id", atualizarUsuario);
-router.delete("/:id", deletarUsuario);
+router.post("/", authMiddleware, criarUsuario);
+router.get("/", authMiddleware, listarUsuarios);
+router.get("/:id", authMiddleware, buscarUsuario);
+router.put("/:id", authMiddleware, atualizarUsuario);
+router.delete("/:id", authMiddleware, deletarUsuario);
 
 export default router;

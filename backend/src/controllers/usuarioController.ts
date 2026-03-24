@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Usuario from "../models/Usuario";
+import bcrypt from "bcrypt";
 
 // Criar usuário
 export const criarUsuario = async (req: Request, res: Response) => {
@@ -10,10 +11,12 @@ export const criarUsuario = async (req: Request, res: Response) => {
       return res.status(400).json({ erro: "Preencha todos os campos" });
     }
 
+    const senhaHash = await bcrypt.hash(senha, 10);
+
     const usuario = await Usuario.create({
       nome,
       email,
-      senha,
+      senha: senhaHash,
       tipo,
     });
 
