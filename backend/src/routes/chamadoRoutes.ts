@@ -13,6 +13,14 @@ import { verificarTipo } from "../middlewares/permissaoMiddleware";
 
 const router = Router();
 
+// ATRIBUIR → antes do :id
+router.put(
+  "/:id/atribuir",
+  authMiddleware,
+  verificarTipo(["SUPORTE", "ADMIN"]),
+  atribuirChamado,
+);
+
 // LISTAR → qualquer usuário logado
 router.get("/", authMiddleware, listarChamados);
 
@@ -32,13 +40,5 @@ router.delete("/:id", authMiddleware, verificarTipo(["ADMIN"]), deletarChamado);
 
 // BUSCAR 1 → qualquer logado
 router.get("/:id", authMiddleware, buscarChamado);
-
-// ATRIBUIR → só suporte ou admin
-router.put(
-  "/:id/atribuir",
-  authMiddleware,
-  verificarTipo(["SUPORTE", "ADMIN"]),
-  atribuirChamado,
-);
 
 export default router;

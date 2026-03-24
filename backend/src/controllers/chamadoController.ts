@@ -1,17 +1,16 @@
 import { Request, Response } from "express";
 import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
+import { Request, Response } from "express";
+import { registrarLog } from "../utils/logChamado";
 
 // Criar chamado
-export const criarChamado = async (req: Request, res: Response) => {
+export const criarChamado = async (req: any, res: Response) => {
   try {
-    const { titulo, descricao, usuario_id, categoria_id, prioridade } =
-      req.body;
+    const { titulo, descricao, categoria_id, prioridade } = req.body;
 
-    if (!titulo || !descricao || !usuario_id || !categoria_id) {
-      return res
-        .status(400)
-        .json({ erro: "Preencha todos os campos obrigatórios" });
+    if (!titulo || !descricao || !categoria_id) {
+      return res.status(400).json({ erro: "Campos obrigatórios não preenchidos" });
     }
 
     const categoria = await Categoria.findByPk(categoria_id);
@@ -24,25 +23,34 @@ export const criarChamado = async (req: Request, res: Response) => {
 
     const prazo_atendimento = new Date(
       agora.getTime() +
-        categoria.getDataValue("sla_atendimento") * 60 * 60 * 1000,
+        categoria.getDataValue("sla_atendimento") * 60 * 60 * 1000
     );
 
     const prazo_resolucao = new Date(
       agora.getTime() +
-        categoria.getDataValue("sla_resolucao") * 60 * 60 * 1000,
+        categoria.getDataValue("sla_resolucao") * 60 * 60 * 1000
     );
 
     const chamado = await Chamado.create({
       titulo,
       descricao,
-      usuario_id,
+      usuario_id: req.usuario.id,
       categoria_id,
       prioridade,
       prazo_atendimento,
       prazo_resolucao,
+      status: "NOVO",
     });
 
-    res.status(201).json(chamado);
+    // 🔥 LOG
+    await registrarLog({
+      chamado_id: chamado.id,
+      status_anterior: null,
+      status_novo: "NOVO",
+      usuario_id: req.usuario.id,
+    });
+
+    return res.status(201).json(chamado);
   } catch (error) {
     console.error(error);
     res.status(500).json({ erro: "Erro ao criar chamado" });
@@ -104,17 +112,31 @@ export const buscarChamado = async (req: Request, res: Response) => {
 };
 
 // Atualizar chamado
-export const atualizarChamado = async (req: Request, res: Response) => {
+export const atualizarChamado = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.id);
+    const { id } = req.params;
+
+    const chamado = await Chamado.findByPk(id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
+    const statusAnterior = chamado.status;
+
     await chamado.update(req.body);
 
-    res.json(chamado);
+    // 🔥 LOG (só se status mudou)
+    if (req.body.status && req.body.status !== statusAnterior) {
+      await registrarLog({
+        chamado_id: chamado.id,
+        status_anterior: statusAnterior,
+        status_novo: req.body.status,
+        usuario_id: req.usuario.id,
+      });
+    }
+
+    return res.json(chamado);
   } catch (error) {
     res.status(500).json({ erro: "Erro ao atualizar chamado" });
   }
@@ -138,26 +160,33 @@ export const deletarChamado = async (req: Request, res: Response) => {
 };
 
 // Atribuir chamado a um técnico
-export const atribuirChamado = async (req: Request, res: Response) => {
+export const atribuirChamado = async (req: any, res: Response) => {
   try {
+    const { id } = req.params;
     const { tecnico_id } = req.body;
 
-    if (!tecnico_id) {
-      return res.status(400).json({ erro: "tecnico_id é obrigatório" });
-    }
-
-    const chamado = await Chamado.findByPk(req.params.id);
+    const chamado = await Chamado.findByPk(id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
+
+    const statusAnterior = chamado.status;
 
     await chamado.update({
       tecnico_id,
       status: "ATRIBUIDO",
     });
 
-    res.json(chamado);
+    // 🔥 LOG
+    await registrarLog({
+      chamado_id: chamado.id,
+      status_anterior: statusAnterior,
+      status_novo: "ATRIBUIDO",
+      usuario_id: req.usuario.id,
+    });
+
+    return res.json({ mensagem: "Chamado atribuído com sucesso" });
   } catch (error) {
     res.status(500).json({ erro: "Erro ao atribuir chamado" });
   }
