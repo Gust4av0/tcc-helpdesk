@@ -14,7 +14,17 @@ const router = Router();
 router.post("/", authMiddleware, verificarTipo(["ADMIN"]), criarCategoria);
 router.get("/", authMiddleware, listarCategorias); // todos podem ver
 router.get("/:id", authMiddleware, buscarCategoria); // todos podem ver
-router.put("/", authMiddleware, verificarTipo(["ADMIN"]), atualizarCategoria);
-router.delete("/", authMiddleware, verificarTipo(["ADMIN"]), deletarCategoria);
+router.put(
+  "/:id",
+  authMiddleware,
+  verificarTipo(["ADMIN"]),
+  atualizarCategoria,
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  verificarTipo(["ADMIN"]),
+  deletarCategoria,
+);
 
 export default router;
