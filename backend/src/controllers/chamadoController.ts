@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
-import { Request, Response } from "express";
 import { registrarLog } from "../utils/logChamado";
+import { Op } from "sequelize";
 
 // Criar chamado
 export const criarChamado = async (req: any, res: Response) => {
@@ -61,37 +61,62 @@ export const criarChamado = async (req: any, res: Response) => {
 
     return res.status(201).json(chamado);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: "Erro ao criar chamado" });
   }
 };
 
-// Listar chamados
-export const listarChamados = async (req: Request, res: Response) => {
+//listar chamados
+export const listarChamados = async (req: any, res: Response) => {
   try {
-    const chamados = await Chamado.findAll({
-      include: [
-        {
-          association: "usuario",
-          attributes: ["id", "nome", "email", "tipo"],
-        },
-        {
-          association: "tecnico",
-          attributes: ["id", "nome", "email", "tipo"],
-        },
-        {
-          association: "categoria",
-        },
-      ],
-    });
+    let chamados;
 
-    res.json(chamados);
+    // CLIENTE → só vê os próprios
+    if (req.usuario?.tipo === "CLIENTE") {
+      chamados = await Chamado.findAll({
+        where: { usuario_id: req.usuario.id },
+        include: [
+          {
+            association: "usuario",
+            attributes: ["id", "nome", "email", "tipo"],
+          },
+          {
+            association: "tecnico",
+            attributes: ["id", "nome", "email", "tipo"],
+          },
+          {
+            association: "categoria",
+          },
+        ],
+      });
+    } else {
+      // ADMIN / SUPORTE → vê tudo
+      chamados = await Chamado.findAll({
+        include: [
+          {
+            association: "usuario",
+            attributes: ["id", "nome", "email", "tipo"],
+          },
+          {
+            association: "tecnico",
+            attributes: ["id", "nome", "email", "tipo"],
+          },
+          {
+            association: "categoria",
+          },
+        ],
+      });
+    }
+
+    return res.json(chamados);
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao listar chamados" });
+    console.error("🔥 ERRO LISTAR:", error);
+    return res.status(500).json({ erro: "Erro ao listar chamados" });
   }
 };
 
-// Buscar chamado por ID
-export const buscarChamado = async (req: Request, res: Response) => {
+// Buscar chamado 
+export const buscarChamado = async (req: any, res: Response) => {
   try {
     const chamado = await Chamado.findByPk(req.params.id, {
       include: [
@@ -113,8 +138,16 @@ export const buscarChamado = async (req: Request, res: Response) => {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
-    res.json(chamado);
+    if (
+      req.usuario?.tipo === "CLIENTE" &&
+      chamado.usuario_id !== req.usuario.id
+    ) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
+    return res.json(chamado);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: "Erro ao buscar chamado" });
   }
 };
@@ -167,6 +200,7 @@ export const atualizarChamado = async (req: any, res: Response) => {
 
     return res.json(chamado);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: "Erro ao atualizar chamado" });
   }
 };
@@ -184,11 +218,12 @@ export const deletarChamado = async (req: Request, res: Response) => {
 
     res.json({ mensagem: "Chamado excluído com sucesso" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: "Erro ao excluir chamado" });
   }
 };
 
-// Atribuir chamado a um técnico
+// Atribuir técnico
 export const atribuirChamado = async (req: any, res: Response) => {
   try {
     const { id } = req.params;
@@ -207,7 +242,6 @@ export const atribuirChamado = async (req: any, res: Response) => {
       status: "ATRIBUIDO",
     });
 
-    // 🔥 LOG
     await registrarLog({
       chamado_id: chamado.id,
       status_anterior: statusAnterior,
@@ -217,6 +251,7 @@ export const atribuirChamado = async (req: any, res: Response) => {
 
     return res.json({ mensagem: "Chamado atribuído com sucesso" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: "Erro ao atribuir chamado" });
   }
 };
