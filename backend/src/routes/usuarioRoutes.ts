@@ -7,13 +7,18 @@ import {
   deletarUsuario,
 } from "../controllers/usuarioController";
 import { authMiddleware } from "../middlewares/authMiddleware";
+import { verificarTipo } from "../middlewares/permissaoMiddleware";
 
 const router = Router();
 
-router.post("/", authMiddleware, criarUsuario);
-router.get("/", authMiddleware, listarUsuarios);
-router.get("/:id", authMiddleware, buscarUsuario);
-router.put("/:id", authMiddleware, atualizarUsuario);
-router.delete("/:id", authMiddleware, deletarUsuario);
+router.post("/", authMiddleware, verificarTipo(["ADMIN"]), criarUsuario);
+
+router.get("/", authMiddleware, verificarTipo(["ADMIN"]), listarUsuarios);
+
+router.get("/:id", authMiddleware, verificarTipo(["ADMIN"]), buscarUsuario);
+
+router.put("/:id", authMiddleware, verificarTipo(["ADMIN"]), atualizarUsuario);
+
+router.delete("/:id", authMiddleware, verificarTipo(["ADMIN"]), deletarUsuario);
 
 export default router;
