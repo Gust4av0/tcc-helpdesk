@@ -327,7 +327,7 @@ Este projeto está licenciado sob a Licença ISC - veja o arquivo LICENSE para d
 
 ## 📧 Contato
 
-Para dúvidas ou sugestões, entre em contato através de [seu-email@exemplo.com](mailto:seu-email@exemplo.com)
+Para dúvidas ou sugestões, entre em contato através de [gustavomarcolin2005@gmail.com](mailto:seu-email@exemplo.com)
 
 ---
 
