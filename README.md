@@ -323,7 +323,8 @@ Este projeto está licenciado sob a Licença ISC - veja o arquivo LICENSE para d
 
 ## 👥 Autores
 
-- **Seu Nome** - Trabalho de Conclusão de Curso
+- **Gustavo Marcolin Soares**
+- **Anderson Cirino** 
 
 ## 📧 Contato
 
