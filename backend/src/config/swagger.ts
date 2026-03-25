@@ -1,5 +1,11 @@
 import swaggerJSDoc from "swagger-jsdoc";
 
+// URL dinâmica (local vs produção)
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://tcc-helpdesk-backend.onrender.com/api"
+    : "http://localhost:3000/api";
+
 const options: swaggerJSDoc.Options = {
   definition: {
     openapi: "3.0.0",
@@ -10,7 +16,7 @@ const options: swaggerJSDoc.Options = {
     },
     servers: [
       {
-        url: "http://localhost:3000/api",
+        url: baseUrl,
       },
     ],
     components: {
@@ -28,7 +34,7 @@ const options: swaggerJSDoc.Options = {
       },
     ],
   },
-  apis: ["./src/routes/*.ts"], // onde vai ler os comentários
+  apis: ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);
