@@ -7,6 +7,8 @@ class ChamadoLog extends Model {
   status_anterior!: string;
   status_novo!: string;
   usuario_id!: number;
+  acao!: string;
+  descricao!: string;
 }
 
 ChamadoLog.init(
@@ -28,6 +30,15 @@ ChamadoLog.init(
     },
     usuario_id: {
       type: DataTypes.INTEGER,
+    },
+
+    acao: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    descricao: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
