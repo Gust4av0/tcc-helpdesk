@@ -69,11 +69,20 @@ export const criarChamado = async (req: any, res: Response) => {
 //listar chamados
 export const listarChamados = async (req: any, res: Response) => {
   try {
-    let chamados;
+    // PAGINAÇÃO
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
 
-    // CLIENTE → só vê os próprios
+    // ORDENAÇÃO
+    const orderField = req.query.order || "created_at";
+    const direction = req.query.direction === "ASC" ? "ASC" : "DESC";
+
+    let result;
+
+    // CLIENTE → só os próprios chamados
     if (req.usuario?.tipo === "CLIENTE") {
-      chamados = await Chamado.findAll({
+      result = await Chamado.findAndCountAll({
         where: { usuario_id: req.usuario.id },
         include: [
           {
@@ -88,10 +97,13 @@ export const listarChamados = async (req: any, res: Response) => {
             association: "categoria",
           },
         ],
+        limit,
+        offset,
+        order: [["id", "DESC"]],
       });
     } else {
       // ADMIN / SUPORTE → vê tudo
-      chamados = await Chamado.findAll({
+      result = await Chamado.findAndCountAll({
         include: [
           {
             association: "usuario",
@@ -105,12 +117,23 @@ export const listarChamados = async (req: any, res: Response) => {
             association: "categoria",
           },
         ],
+        limit,
+        offset,
+        order: [["id", "DESC"]],
       });
     }
 
-    return res.json(chamados);
+    const total = result.count;
+    const totalPages = Math.ceil(total / limit);
+
+    return res.json({
+      total,
+      totalPages,
+      currentPage: page,
+      data: result.rows,
+    });
   } catch (error) {
-    console.error("🔥 ERRO LISTAR:", error);
+    console.error("ERRO PAGINAÇÃO:", error);
     return res.status(500).json({ erro: "Erro ao listar chamados" });
   }
 };
