@@ -3,18 +3,17 @@ import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
 import { registrarLog } from "../utils/logChamado";
 
-
 // CRIAR CHAMADO
 export const criarChamado = async (req: any, res: Response) => {
   try {
     const { titulo, descricao, categoria_id, prioridade } = req.body;
 
     if (!titulo || titulo.length < 5) {
-      return res.status(400).json({ erro: "Título deve ter no mínimo 5 caracteres" });
+      return res.status(400).json({ erro: "Título inválido" });
     }
 
     if (!descricao || descricao.length < 10) {
-      return res.status(400).json({ erro: "Descrição deve ter no mínimo 10 caracteres" });
+      return res.status(400).json({ erro: "Descrição inválida" });
     }
 
     if (!categoria_id) {
@@ -47,7 +46,6 @@ export const criarChamado = async (req: any, res: Response) => {
       status: "NOVO",
     });
 
-    // LOG CORRETO
     await registrarLog({
       chamado_id: chamado.id,
       status_anterior: null,
@@ -59,13 +57,11 @@ export const criarChamado = async (req: any, res: Response) => {
 
     return res.status(201).json(chamado);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ erro: "Erro ao criar chamado" });
   }
 };
 
-
-// LISTAR COM PAGINAÇÃO
+// LISTAR
 export const listarChamados = async (req: any, res: Response) => {
   try {
     const page = Number(req.query.page) || 1;
@@ -74,7 +70,7 @@ export const listarChamados = async (req: any, res: Response) => {
 
     let result;
 
-    if (req.usuario?.tipo === "CLIENTE") {
+    if (req.usuario.tipo === "CLIENTE") {
       result = await Chamado.findAndCountAll({
         where: { usuario_id: req.usuario.id },
         include: ["usuario", "tecnico", "categoria"],
@@ -91,20 +87,18 @@ export const listarChamados = async (req: any, res: Response) => {
       });
     }
 
-    return res.json({
+    res.json({
       total: result.count,
       totalPages: Math.ceil(result.count / limit),
       currentPage: page,
       data: result.rows,
     });
-  } catch (error) {
-    console.error("ERRO LISTAR:", error);
+  } catch {
     res.status(500).json({ erro: "Erro ao listar chamados" });
   }
 };
 
-
-// BUSCAR POR ID
+// BUSCAR
 export const buscarChamado = async (req: any, res: Response) => {
   try {
     const chamado = await Chamado.findByPk(req.params.id, {
@@ -116,19 +110,17 @@ export const buscarChamado = async (req: any, res: Response) => {
     }
 
     if (
-      req.usuario?.tipo === "CLIENTE" &&
+      req.usuario.tipo === "CLIENTE" &&
       chamado.usuario_id !== req.usuario.id
     ) {
       return res.status(403).json({ erro: "Sem permissão" });
     }
 
-    return res.json(chamado);
-  } catch (error) {
-    console.error(error);
+    res.json(chamado);
+  } catch {
     res.status(500).json({ erro: "Erro ao buscar chamado" });
   }
 };
-
 
 // ATUALIZAR
 export const atualizarChamado = async (req: any, res: Response) => {
@@ -140,7 +132,13 @@ export const atualizarChamado = async (req: any, res: Response) => {
     }
 
     if (chamado.status === "FINALIZADO") {
-      return res.status(400).json({ erro: "Chamado já finalizado" });
+      return res.status(400).json({ erro: "Chamado finalizado" });
+    }
+
+    if (req.usuario.tipo === "CLIENTE" && req.body.status) {
+      return res.status(403).json({
+        erro: "Cliente não pode alterar status",
+      });
     }
 
     const statusAnterior = chamado.status;
@@ -158,15 +156,13 @@ export const atualizarChamado = async (req: any, res: Response) => {
       });
     }
 
-    return res.json(chamado);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: "Erro ao atualizar chamado" });
+    res.json(chamado);
+  } catch {
+    res.status(500).json({ erro: "Erro ao atualizar" });
   }
 };
 
-
-// DELETAR (SOFT DELETE + LOG)
+// DELETAR
 export const deletarChamado = async (req: any, res: Response) => {
   try {
     const chamado = await Chamado.findByPk(req.params.id);
@@ -175,11 +171,9 @@ export const deletarChamado = async (req: any, res: Response) => {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
-    const statusAnterior = chamado.status;
-
     await registrarLog({
       chamado_id: chamado.id,
-      status_anterior: statusAnterior,
+      status_anterior: chamado.status,
       status_novo: null,
       usuario_id: req.usuario.id,
       acao: "DELETOU",
@@ -188,24 +182,30 @@ export const deletarChamado = async (req: any, res: Response) => {
 
     await chamado.destroy();
 
-    return res.json({ mensagem: "Chamado excluído com sucesso" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: "Erro ao excluir chamado" });
+    res.json({ mensagem: "Excluído com sucesso" });
+  } catch {
+    res.status(500).json({ erro: "Erro ao deletar" });
   }
 };
 
-
-// ATRIBUIR TÉCNICO
+// ATRIBUIR
 export const atribuirChamado = async (req: any, res: Response) => {
   try {
-    const { id } = req.params;
+    const chamado = await Chamado.findByPk(req.params.id);
     const { tecnico_id } = req.body;
-
-    const chamado = await Chamado.findByPk(id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado não encontrado" });
+    }
+
+    if (!["SUPORTE", "ADMIN"].includes(req.usuario.tipo)) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
+    if (chamado.tecnico_id) {
+      return res.status(400).json({
+        erro: "Já possui técnico",
+      });
     }
 
     const statusAnterior = chamado.status;
@@ -221,12 +221,11 @@ export const atribuirChamado = async (req: any, res: Response) => {
       status_novo: "ATRIBUIDO",
       usuario_id: req.usuario.id,
       acao: "ATRIBUIU",
-      descricao: `Chamado atribuído ao técnico ID ${tecnico_id}`,
+      descricao: `Atribuído ao técnico ${tecnico_id}`,
     });
 
-    return res.json({ mensagem: "Chamado atribuído com sucesso" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: "Erro ao atribuir chamado" });
+    res.json({ mensagem: "Atribuído com sucesso" });
+  } catch {
+    res.status(500).json({ erro: "Erro ao atribuir" });
   }
 };
