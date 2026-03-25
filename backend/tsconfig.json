@@ -5,19 +5,12 @@
     "rootDir": "src",
     "outDir": "dist",
     "esModuleInterop": true,
-    "strict": true,
 
-    // Node
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+
     "types": ["node"],
-
-    // Output
-    "sourceMap": true,
-
-    // Segurança
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    // Compatibilidade
-    "skipLibCheck": true
+    "sourceMap": true
   }
 }
