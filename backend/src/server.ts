@@ -6,6 +6,8 @@ import cors from "cors";
 import routes from "./routes";
 import sequelize from "./config/database";
 import { seed } from "./database/seed";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger";
 
 const app = express();
 
@@ -13,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api", routes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const iniciarServidor = async () => {
   try {
