@@ -11,12 +11,29 @@ import { swaggerSpec } from "./config/swagger";
 
 const app = express();
 
-app.use(cors());
+// CORS (liberado para testes e front)
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 
+// Rotas da API
 app.use("/api", routes);
+
+// Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Health check (Render usa isso)
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
+// Inicialização do servidor
 const iniciarServidor = async () => {
   try {
     await sequelize.authenticate();
@@ -28,8 +45,10 @@ const iniciarServidor = async () => {
     await seed();
     console.log("Seed executado");
 
-    app.listen(process.env.PORT || 3000, () => {
-      console.log("Servidor rodando na porta 3000");
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando na porta ${PORT}`);
     });
 
   } catch (error) {
