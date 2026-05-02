@@ -1,0 +1,186 @@
+.ticket-table-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.ticket-table-wrapper {
+  overflow-x: auto;
+}
+
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ticket-table thead {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ticket-table thead th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ticket-table tbody {
+  border-top: 1px solid #e5e7eb;
+}
+
+.ticket-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.15s;
+}
+
+.ticket-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.ticket-table tbody td {
+  padding: 1rem 1.5rem;
+}
+
+.ticket-id {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.ticket-categoria {
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.ticket-cliente {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.ticket-status {
+  white-space: nowrap;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-badge.novo {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.atribuido {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.status-badge.em-atendimento {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+
+.status-badge.finalizado {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.ticket-prioridade {
+  white-space: nowrap;
+}
+
+.prioridade-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.prioridade-badge.baixa {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.prioridade-badge.media {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.prioridade-badge.alta {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+
+.prioridade-badge.urgente {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.ticket-sla {
+  white-space: nowrap;
+}
+
+.sla-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sla-indicator svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.sla-indicator.no-prazo svg {
+  color: #10b981;
+}
+
+.sla-indicator.no-prazo span {
+  font-size: 0.875rem;
+  color: #047857;
+  font-weight: 500;
+}
+
+.sla-indicator.proximo svg {
+  color: #eab308;
+}
+
+.sla-indicator.proximo span {
+  font-size: 0.875rem;
+  color: #a16207;
+  font-weight: 500;
+}
+
+.sla-indicator.atrasado svg {
+  color: #ef4444;
+}
+
+.sla-indicator.atrasado span {
+  font-size: 0.875rem;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.ticket-data {
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.ticket-tecnico {
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #111827;
+}

@@ -1,0 +1,386 @@
+
+.atribuir-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 1rem;
+}
+
+
+.atribuir-container {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 50rem;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.atribuir-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(to right, #060606, #04157a);
+  color: white;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.atribuir-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+}
+
+.atribuir-header p {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.atribuir-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.atribuir-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.atribuir-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+
+.atribuir-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+
+.atribuir-tecnico-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(to right, #ede9fe, #fae8ff);
+  border: 1px solid #e9d5ff;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.atribuir-tecnico-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #060606, #04157a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.atribuir-tecnico-avatar svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.atribuir-tecnico-nome {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.atribuir-tecnico-email {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+
+.atribuir-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin-bottom: 1.5rem;
+}
+
+
+.atribuir-chamados-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.atribuir-chamados-header svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #04157a;
+}
+
+.atribuir-chamados-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.atribuir-badge {
+  background-color: #04157a;
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+
+.atribuir-chamados-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+
+.atribuir-chamado-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: white;
+}
+
+.atribuir-chamado-card:hover {
+  border-color: #04157a;
+  background-color: #f9fafb;
+}
+
+.atribuir-chamado-card.selected {
+  border-color: #04157a;
+  background-color: #ede9fe;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.atribuir-chamado-radio {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.25rem;
+}
+
+.atribuir-chamado-radio input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: #04157a;
+}
+
+.atribuir-chamado-content {
+  flex: 1;
+}
+
+.atribuir-chamado-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.atribuir-chamado-id {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #04157a;
+}
+
+.prioridade-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+}
+
+.prioridade-badge.baixa {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.prioridade-badge.media {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.prioridade-badge.alta {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+
+.prioridade-badge.urgente {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.atribuir-chamado-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.atribuir-chamado-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.atribuir-chamado-categoria {
+  font-weight: 500;
+}
+
+.atribuir-chamado-separator {
+  color: #d1d5db;
+}
+
+.atribuir-chamado-data {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+.icon-small {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+
+.atribuir-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.btn-secondary {
+  padding: 0.625rem 1.5rem;
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  background: linear-gradient(to right, #060606, #04157a);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(to right, #060606, #04157a);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+
+@media (max-width: 768px) {
+  .atribuir-container {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .atribuir-header {
+    border-radius: 0;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .atribuir-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .atribuir-body {
+    padding: 1.5rem;
+  }
+
+  .atribuir-footer {
+    padding: 1.25rem 1.5rem;
+    flex-direction: column-reverse;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .atribuir-chamado-card {
+    padding: 1rem;
+  }
+
+  .atribuir-chamado-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

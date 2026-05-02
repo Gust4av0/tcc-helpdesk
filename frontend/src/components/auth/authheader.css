@@ -1,0 +1,19 @@
+.auth-header {
+  background: linear-gradient(to bottom, #060606, #04157a);
+  padding: 2rem;
+  text-align: center;
+}
+
+.auth-logo h1 {
+  color: white;
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.auth-logo p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}

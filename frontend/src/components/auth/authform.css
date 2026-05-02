@@ -1,0 +1,94 @@
+.auth-form-wrapper {
+  padding: 2rem;
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-title h2 {
+  font-size: 1.75rem; 
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.auth-title p {
+  color: #6b7280;
+  font-size: 3rem; 
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; 
+}
+
+
+.auth-input-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+
+.auth-input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+}
+
+
+.auth-button {
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+}
+
+
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+.auth-footer p {
+  margin: 0;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: #04157a;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  font-size: 1.25rem;
+}
+
+.auth-link:hover {
+  color: #04157a;
+  text-decoration: underline;
+}
+
+
+@media (min-width: 640px) {
+  .auth-form-wrapper {
+    padding: 2.5rem;
+  }
+
+  .auth-title h2 {
+    font-size: 2rem; 
+  }
+
+  .auth-title p {
+    font-size: 1.25rem;
+  }
+}
