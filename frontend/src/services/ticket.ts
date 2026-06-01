@@ -59,3 +59,10 @@ export async function finalizeTicket(chamadoId: number) {
     body: { status: "FINALIZADO" },
   });
 }
+
+export async function updateTicketStatus(chamadoId: number, status: string) {
+  return apiRequest<Chamado>(`/chamados/${chamadoId}`, {
+    method: "PUT",
+    body: { status },
+  });
+}

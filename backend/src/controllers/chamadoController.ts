@@ -136,7 +136,24 @@ export const atualizarChamado = async (req: any, res: Response) => {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
-    if (chamado.status === "FINALIZADO") {
+    const statusPermitidos = [
+      "NOVO",
+      "ATRIBUIDO",
+      "EM_ATENDIMENTO",
+      "FINALIZADO",
+    ];
+
+    if (req.body.status && !statusPermitidos.includes(req.body.status)) {
+      return res.status(400).json({ erro: "Status inválido" });
+    }
+
+    const reabrindoChamado =
+      chamado.status === "FINALIZADO" &&
+      req.usuario.tipo === "ADMIN" &&
+      req.body.status &&
+      req.body.status !== "FINALIZADO";
+
+    if (chamado.status === "FINALIZADO" && !reabrindoChamado) {
       return res.status(400).json({ erro: "Chamado finalizado" });
     }
 

@@ -70,6 +70,13 @@ export const listarMensagens = async (req: any, res: Response) => {
       return res.status(403).json({ erro: "Sem permissão" });
     }
 
+    if (
+      req.usuario.tipo === "SUPORTE" &&
+      chamado.tecnico_id !== req.usuario.id
+    ) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
     const mensagens = await ChamadoMensagem.findAll({
       where: { chamado_id: req.params.chamado_id },
       order: [["id", "ASC"]],

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import ChamadoLog from "../models/ChamadoLog";
+import Chamado from "../models/Chamado";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -34,6 +35,26 @@ const router = Router();
  */
 router.get("/:chamado_id", authMiddleware, async (req, res) => {
   try {
+    const chamado = await Chamado.findByPk(String(req.params.chamado_id));
+
+    if (!chamado) {
+      return res.status(404).json({ erro: "Chamado não encontrado" });
+    }
+
+    if (
+      (req as any).usuario.tipo === "CLIENTE" &&
+      chamado.getDataValue("usuario_id") !== (req as any).usuario.id
+    ) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
+    if (
+      (req as any).usuario.tipo === "SUPORTE" &&
+      chamado.getDataValue("tecnico_id") !== (req as any).usuario.id
+    ) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
     const logs = await ChamadoLog.findAll({
       where: { chamado_id: req.params.chamado_id },
       order: [["created_at", "DESC"]],

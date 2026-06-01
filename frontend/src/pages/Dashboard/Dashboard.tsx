@@ -28,7 +28,13 @@ import {
   CheckCircle,
   Plus,
 } from "lucide-react";
-import { listTickets, createTicket, assignTicket, finalizeTicket } from "../../services/ticket";
+import {
+  listTickets,
+  createTicket,
+  assignTicket,
+  finalizeTicket,
+  updateTicketStatus,
+} from "../../services/ticket";
 import { getDashboard, DashboardData } from "../../services/dashboard";
 import {
   listCategories,
@@ -430,6 +436,23 @@ export default function Dashboard({
     }
   };
 
+  const handleUpdateTicketStatus = async (
+    ticketId: string | number,
+    status: string,
+  ) => {
+    try {
+      const rawId =
+        typeof ticketId === "string"
+          ? Number(ticketId.replace("#", ""))
+          : ticketId;
+      await updateTicketStatus(rawId, status);
+      loadTickets();
+      loadDashboardData();
+    } catch {
+      addToast("error", "Erro ao atualizar status do chamado");
+    }
+  };
+
   return (
     <div className="app-container">
       <Sidebar
@@ -585,6 +608,7 @@ export default function Dashboard({
         ticket={selectedTicket}
         currentUser={user}
         onFinalize={handleFinalizeTicket}
+        onStatusChange={handleUpdateTicketStatus}
       />
 
       <AtribuirChamado
