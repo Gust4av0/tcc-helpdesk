@@ -12,18 +12,24 @@ import "./ticket-details.css";
 interface TicketDetailsProps {
   isOpen: boolean;
   onClose: () => void;
+  currentUser?: {
+    id: number;
+    tipo: string;
+  } | null;
+  onFinalize?: (ticketId: number) => Promise<void>;
   ticket: {
     id: string | number;
     titulo: string;
     descricao: string;
     categoria?: string | { id: number; nome: string };
     cliente?: string;
-    status: "Novo" | "Atribuído" | "Em Atendimento" | "Finalizado" | string;
+    status: string;
     prioridade: "Baixa" | "Média" | "Alta" | "Urgente" | string;
     sla?: "no-prazo" | "proximo" | "atrasado" | string;
     slaRestante?: string;
     dataAbertura?: string;
     tecnico?: string | { id: number; nome: string } | null;
+    tecnico_id?: number | null;
     historico?: Array<{
       data: string;
       acao: string;
@@ -32,7 +38,7 @@ interface TicketDetailsProps {
   } | null;
 }
 
-export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
+export function TicketDetails({ isOpen, onClose, currentUser, onFinalize, ticket }: TicketDetailsProps) {
   if (!isOpen || !ticket) return null;
 
   const categoriaLabel =
@@ -53,11 +59,28 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
   };
 
   const statusClassMap: Record<string, string> = {
+    NOVO: "novo",
+    ATRIBUIDO: "atribuido",
+    EM_ATENDIMENTO: "em-atendimento",
+    FINALIZADO: "finalizado",
     Novo: "novo",
     Atribuído: "atribuido",
     "Em Atendimento": "em-atendimento",
     Finalizado: "finalizado",
   };
+
+  const statusLabelMap: Record<string, string> = {
+    NOVO: "NOVO",
+    ATRIBUIDO: "ATRIBUIDO",
+    EM_ATENDIMENTO: "EM ATENDIMENTO",
+    FINALIZADO: "FINALIZADO",
+    Novo: "NOVO",
+    Atribuído: "ATRIBUIDO",
+    "Em Atendimento": "EM ATENDIMENTO",
+    Finalizado: "FINALIZADO",
+  };
+
+  const statusLabel = statusLabelMap[ticket.status] ?? ticket.status;
 
   const prioridadeClassMap: Record<string, string> = {
     Baixa: "baixa",
@@ -77,6 +100,14 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
     proximo: "Próximo do limite",
     atrasado: "Atrasado",
   };
+
+  const canFinalize = Boolean(
+    onFinalize &&
+      currentUser &&
+      (currentUser.tipo === "ADMIN" || currentUser.tipo === "SUPORTE") &&
+      (ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO") &&
+      (currentUser.tipo === "ADMIN" || ticket.tecnico_id === currentUser.id),
+  );
 
   return (
     <div className="ticket-details-overlay" onClick={handleOverlayClick}>
@@ -118,7 +149,7 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
                 <span
                   className={`status-badge ${statusClassMap[ticket.status]}`}
                 >
-                  {ticket.status}
+                  {statusLabel}
                 </span>
               </div>
               <div className="ticket-details-field">
@@ -197,6 +228,15 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
           <button onClick={onClose} className="btn-secondary">
             Fechar
           </button>
+          {canFinalize && (
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => onFinalize?.(Number(ticket.id))}
+            >
+              Finalizar
+            </button>
+          )}
         </div>
       </div>
     </div>

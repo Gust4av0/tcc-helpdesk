@@ -182,12 +182,12 @@
   max-width: 70%;
 }
 
-.chat-message.client {
-  align-self: flex-end;
+.chat-message.incoming {
+  align-self: flex-start;
 }
 
-.chat-message.tech {
-  align-self: flex-start;
+.chat-message.outgoing {
+  align-self: flex-end;
 }
 
 .chat-message-sender {
@@ -208,16 +208,153 @@
   line-height: 1.5;
 }
 
-.chat-message.client .chat-message-bubble {
+.chat-message.incoming .chat-message-bubble {
+  background-color: #f3f4f6;
+  color: #111827;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.chat-message.outgoing .chat-message-bubble {
   background: linear-gradient(to right, #060606, #04157a);
   color: white;
   border-bottom-right-radius: 0.25rem;
 }
 
-.chat-message.tech .chat-message-bubble {
-  background-color: #f3f4f6;
+.chat-message-attachment {
+  margin-top: 0.75rem;
+}
+
+.chat-attachment-image {
+  max-width: 14rem;
+  max-height: 12rem;
+  border-radius: 0.75rem;
+  display: block;
+}
+
+.chat-attachment-link {
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background-color: rgba(79, 70, 229, 0.1);
+  color: #3730a3;
+  text-decoration: none;
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.messages-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.messages-tab {
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.messages-tab.active,
+.messages-tab:hover {
+  background: #eef2ff;
+  color: #1e3a8a;
+  border-color: #c7d2fe;
+}
+
+.ticket-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 0.75rem;
+}
+
+.ticket-status-badge.novo {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.ticket-status-badge.atribuido {
+  background-color: #f5d0fe;
+  color: #7c3aed;
+}
+
+.ticket-status-badge.em-atendimento {
+  background-color: #fed7aa;
+  color: #c2410c;
+}
+
+.ticket-status-badge.finalizado {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.ticket-list-item-state {
+  display: flex;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.chat-file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  background-color: white;
+}
+
+.chat-file-button:hover {
+  background-color: #f9fafb;
+}
+
+.attachment-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.attachment-preview-info {
   color: #111827;
-  border-bottom-left-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.attachment-remove-btn {
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.chat-input-container {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .chat-message-time {
@@ -226,8 +363,18 @@
   margin-top: 0.25rem;
 }
 
-.chat-message.client .chat-message-time {
+.chat-message.outgoing .chat-message-time {
   text-align: right;
+}
+
+.chat-finalized-notice {
+  padding: 0.75rem 1rem;
+  margin: 0 1.5rem 1rem;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .chat-input-container {

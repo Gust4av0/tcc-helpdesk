@@ -20,7 +20,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
 // Rotas da API
 app.use("/api", routes);

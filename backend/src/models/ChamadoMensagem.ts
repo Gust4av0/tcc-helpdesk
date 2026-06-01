@@ -29,7 +29,7 @@ ChamadoMensagem.init(
       allowNull: false,
     },
     anexo: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT("long"),
       allowNull: true,
     },
   },

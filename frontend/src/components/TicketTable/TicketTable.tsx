@@ -31,6 +31,16 @@ interface TicketTableProps {
   onTicketClick?: (ticket: Ticket) => void;
 }
 
+const normalizeClass = (value?: string) =>
+  value
+    ? value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/_+/g, "-")
+    : "";
+
 export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
   const displayTickets = tickets ?? [];
 
@@ -70,13 +80,13 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                 <td>{(ticket as any).usuario?.nome ?? ticket.cliente ?? 'Cliente'}</td>
 
                 <td>
-                  <span className="status-badge">
+                  <span className={`status-badge ${normalizeClass(ticket.status)}`}>
                     {ticket.status}
                   </span>
                 </td>
 
                 <td>
-                  <span className="prioridade-badge">
+                  <span className={`prioridade-badge ${normalizeClass(ticket.prioridade)}`}>
                     {ticket.prioridade}
                   </span>
                 </td>

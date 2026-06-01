@@ -146,6 +146,14 @@ export const atualizarChamado = async (req: any, res: Response) => {
       });
     }
 
+    if (
+      req.body.status === "FINALIZADO" &&
+      req.usuario.tipo === "SUPORTE" &&
+      chamado.tecnico_id !== req.usuario.id
+    ) {
+      return res.status(403).json({ erro: "Sem permissão" });
+    }
+
     const statusAnterior = chamado.status;
 
     await chamado.update(req.body);

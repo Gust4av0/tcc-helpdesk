@@ -52,3 +52,10 @@ export async function assignTicket(chamadoId: number, tecnico_id: number) {
     body: { tecnico_id },
   });
 }
+
+export async function finalizeTicket(chamadoId: number) {
+  return apiRequest<{ mensagem: string }>(`/chamados/${chamadoId}`, {
+    method: "PUT",
+    body: { status: "FINALIZADO" },
+  });
+}

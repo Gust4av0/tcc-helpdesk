@@ -27,7 +27,7 @@ import {
   CheckCircle,
   Plus,
 } from "lucide-react";
-import { listTickets, createTicket, assignTicket } from "../../services/ticket";
+import { listTickets, createTicket, assignTicket, finalizeTicket } from "../../services/ticket";
 import { getDashboard, DashboardData } from "../../services/dashboard";
 import {
   listCategories,
@@ -119,6 +119,79 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       },
     } as DashboardData;
   }, [dashboardData, tickets, user]);
+
+  const filteredTickets = useMemo(() => {
+    const now = new Date();
+
+    return tickets.filter((ticket) => {
+      const status = ticket.status?.toUpperCase() ?? "NOVO";
+      const prioridade = ticket.prioridade?.toLowerCase() ?? "";
+      const prazoAtendimento = ticket.prazo_atendimento
+        ? new Date(ticket.prazo_atendimento)
+        : null;
+
+      if (statusFilter !== "todos") {
+        if (statusFilter === "em-atendimento") {
+          if (status !== "ATRIBUIDO" && status !== "EM_ATENDIMENTO") {
+            return false;
+          }
+        } else {
+          const selectedStatus = {
+            novo: "NOVO",
+            atribuido: "ATRIBUIDO",
+            finalizado: "FINALIZADO",
+          }[statusFilter as string];
+
+          if (selectedStatus && status !== selectedStatus) {
+            return false;
+          }
+        }
+      }
+
+      if (prioridadeFilter !== "todas") {
+        if (prioridade !== prioridadeFilter) {
+          return false;
+        }
+      }
+
+      if (dataFilter !== "todas") {
+        if (!prazoAtendimento) {
+          return false;
+        }
+
+        const diff = now.getTime() - prazoAtendimento.getTime();
+        if (dataFilter === "hoje") {
+          const hoje = new Date(now);
+          hoje.setHours(0, 0, 0, 0);
+          const fimHoje = new Date(hoje);
+          fimHoje.setHours(23, 59, 59, 999);
+          if (prazoAtendimento < hoje || prazoAtendimento > fimHoje) {
+            return false;
+          }
+        }
+
+        if (dataFilter === "semana") {
+          const semanaAtras = new Date(now);
+          semanaAtras.setDate(now.getDate() - 7);
+          semanaAtras.setHours(0, 0, 0, 0);
+          if (prazoAtendimento < semanaAtras) {
+            return false;
+          }
+        }
+
+        if (dataFilter === "mes") {
+          const mesAtras = new Date(now);
+          mesAtras.setMonth(now.getMonth() - 1);
+          mesAtras.setHours(0, 0, 0, 0);
+          if (prazoAtendimento < mesAtras) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [tickets, statusFilter, prioridadeFilter, dataFilter]);
 
   const loadTickets = async () => {
     try {
@@ -316,6 +389,21 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   };
 
+  const handleFinalizeTicket = async (ticketId: string | number) => {
+    try {
+      const rawId =
+        typeof ticketId === "string"
+          ? Number(ticketId.replace("#", ""))
+          : ticketId;
+      await finalizeTicket(rawId);
+      addToast("success", "Chamado finalizado com sucesso");
+      loadTickets();
+      loadDashboardData();
+    } catch {
+      addToast("error", "Erro ao finalizar chamado");
+    }
+  };
+
   return (
     <div className="app-container">
       <Sidebar
@@ -362,18 +450,13 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     color="blue"
                   />
                   <MetricCard
-                    title="Chamados Atribuídos"
-                    value={computedDashboardData?.porStatus?.ATRIBUIDO ?? 0}
+                    title="Chamados em Atendimento"
+                    value={
+                      (computedDashboardData?.porStatus?.ATRIBUIDO ?? 0) +
+                      (computedDashboardData?.porStatus?.EM_ATENDIMENTO ?? 0)
+                    }
                     icon={Users}
                     color="purple"
-                  />
-                  <MetricCard
-                    title="Em Atendimento"
-                    value={
-                      computedDashboardData?.porStatus?.EM_ATENDIMENTO ?? 0
-                    }
-                    icon={Clock}
-                    color="orange"
                   />
                   <MetricCard
                     title="Finalizados"
@@ -393,7 +476,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                 />
 
                 <TicketTable
-                  tickets={tickets}
+                  tickets={filteredTickets}
                   onTicketClick={handleTicketClick}
                 />
               </>
@@ -450,6 +533,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           setSelectedTicket(null);
         }}
         ticket={selectedTicket}
+        currentUser={user}
+        onFinalize={handleFinalizeTicket}
       />
 
       <AtribuirChamado

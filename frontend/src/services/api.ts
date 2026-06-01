@@ -26,11 +26,13 @@ export function setStoredUser(user: any | null) {
   }
 }
 
-function buildHeaders(initHeaders?: HeadersInit) {
+function buildHeaders(initHeaders?: HeadersInit, body?: any) {
   const headers = new Headers(initHeaders);
 
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  if (!body || !(body instanceof FormData)) {
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
   }
 
   const token = getStoredToken();
@@ -51,10 +53,10 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const init: RequestInit = {
     ...options,
-    headers: buildHeaders(options.headers),
+    headers: buildHeaders(options.headers, options.body),
   };
 
-  if (options.body && typeof options.body !== "string") {
+  if (options.body && typeof options.body !== "string" && !(options.body instanceof FormData)) {
     init.body = JSON.stringify(options.body);
   }
 

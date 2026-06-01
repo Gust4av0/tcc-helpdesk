@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
-import { listTickets, assignTicket, Chamado } from "../../services/ticket";
+import { listTickets, assignTicket, finalizeTicket, Chamado } from "../../services/ticket";
 import { AuthUser } from "../../services/auth";
 import { useToast } from "../../components/Toast/ToastContext";
 import "./meus-chamados.css";
@@ -12,7 +12,7 @@ interface MeusChamadosProps {
 export function MeusChamados({ user }: MeusChamadosProps) {
   const [tickets, setTickets] = useState<Chamado[]>([]);
   const [filterStatus, setFilterStatus] = useState<
-    "todos" | "Novo" | "Em Atendimento" | "Finalizado"
+    "todos" | "Abertos" | "Em Atendimento" | "Finalizado"
   >("todos");
 
   const { addToast } = useToast();
@@ -62,13 +62,26 @@ export function MeusChamados({ user }: MeusChamadosProps) {
     }
   };
 
+  const handleFinalizeTicket = async (ticketId: number) => {
+    try {
+      await finalizeTicket(ticketId);
+      addToast("success", "Chamado finalizado com sucesso");
+      loadTickets();
+    } catch (error: any) {
+      addToast("error", error?.message || "Erro ao finalizar chamado");
+    }
+  };
+
   const filteredTickets = tickets.filter((ticket) => {
     if (filterStatus === "todos") return true;
-    if (filterStatus === "Novo") {
-      return ticket.status === "NOVO" || ticket.status === "ATRIBUIDO";
+    if (filterStatus === "Abertos") {
+      return ticket.status === "NOVO";
     }
     if (filterStatus === "Em Atendimento") {
-      return ticket.status === "EM_ATENDIMENTO";
+      return (
+        ticket.status === "ATRIBUIDO" ||
+        ticket.status === "EM_ATENDIMENTO"
+      );
     }
     if (filterStatus === "Finalizado") {
       return ticket.status === "FINALIZADO";
@@ -77,10 +90,11 @@ export function MeusChamados({ user }: MeusChamadosProps) {
   });
 
   const totalAbertos = tickets.filter(
-    (ticket) => ticket.status === "NOVO" || ticket.status === "ATRIBUIDO",
+    (ticket) => ticket.status === "NOVO",
   ).length;
   const totalEmAtendimento = tickets.filter(
-    (ticket) => ticket.status === "EM_ATENDIMENTO",
+    (ticket) =>
+      ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO",
   ).length;
   const totalFinalizados = tickets.filter(
     (ticket) => ticket.status === "FINALIZADO",
@@ -104,8 +118,8 @@ export function MeusChamados({ user }: MeusChamadosProps) {
           <span className="filter-count">{tickets.length}</span>
         </button>
         <button
-          className={`filter-tab ${filterStatus === "Novo" ? "active" : ""}`}
-          onClick={() => setFilterStatus("Novo")}
+          className={`filter-tab ${filterStatus === "Abertos" ? "active" : ""}`}
+          onClick={() => setFilterStatus("Abertos")}
         >
           <span>Abertos</span>
           <span className="filter-count">{totalAbertos}</span>
@@ -135,7 +149,10 @@ export function MeusChamados({ user }: MeusChamadosProps) {
               <div className="chamado-card-header">
                 <h3>{ticket.titulo}</h3>
                 <span
-                  className={`status-badge ${ticket.status.toLowerCase().replace(/\s/g, "-")}`}
+                  className={`status-badge ${ticket.status
+                    .toLowerCase()
+                    .replace(/\s/g, "-")
+                    .replace(/_/g, "-")}`}
                 >
                   {ticket.status}
                 </span>
@@ -163,6 +180,20 @@ export function MeusChamados({ user }: MeusChamadosProps) {
                   </button>
                 </div>
               )}
+
+              {(user?.tipo === "SUPORTE" || user?.tipo === "ADMIN") &&
+                (ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO") &&
+                (user.tipo === "ADMIN" || ticket.tecnico_id === user.id) && (
+                  <div className="chamado-card-actions">
+                    <button
+                      type="button"
+                      className="finalizar-btn"
+                      onClick={() => handleFinalizeTicket(Number(ticket.id))}
+                    >
+                      Finalizar
+                    </button>
+                  </div>
+                )}
             </div>
           ))
         )}

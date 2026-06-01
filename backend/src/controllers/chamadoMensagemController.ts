@@ -6,7 +6,7 @@ export const criarMensagem = async (req: any, res: Response) => {
   try {
     const { chamado_id, mensagem, anexo } = req.body;
 
-    if (!chamado_id || !mensagem) {
+    if (!chamado_id || (!mensagem && !anexo)) {
       return res.status(400).json({ erro: "Dados inválidos" });
     }
 
@@ -36,11 +36,17 @@ export const criarMensagem = async (req: any, res: Response) => {
       });
     }
 
+    const attachmentData = anexo
+      ? typeof anexo === "string"
+        ? anexo
+        : JSON.stringify(anexo)
+      : null;
+
     const msg = await ChamadoMensagem.create({
       chamado_id,
       usuario_id: req.usuario.id,
-      mensagem,
-      anexo,
+      mensagem: mensagem || "",
+      anexo: attachmentData,
     });
 
     res.status(201).json(msg);
