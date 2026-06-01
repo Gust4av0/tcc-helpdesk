@@ -32,6 +32,10 @@ interface UsuariosCadastradosProps {
   onRefresh?: () => Promise<void>;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function UsuariosCadastrados({
   isOpen,
   onClose,
@@ -132,8 +136,8 @@ export function UsuariosCadastrados({
       addToast("success", "Usuário excluído com sucesso");
       setActiveDropdown(null);
       await onRefresh?.();
-    } catch (err: any) {
-      addToast("error", err?.message || "Erro ao excluir usuário");
+    } catch (err: unknown) {
+      addToast("error", getErrorMessage(err, "Erro ao excluir usuário"));
     }
   };
 
@@ -147,13 +151,13 @@ export function UsuariosCadastrados({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.email || !formData.tipo) {
+    if (!formData.nome || !formData.tipo) {
       addToast("error", "Preencha todos os campos obrigatórios");
       return;
     }
 
-    if (formMode === "create" && !formData.senha) {
-      addToast("error", "Senha é obrigatória para novo usuário");
+    if (formMode === "create" && (!formData.email || !formData.senha)) {
+      addToast("error", "E-mail e senha são obrigatórios para novo usuário");
       return;
     }
 
@@ -171,7 +175,6 @@ export function UsuariosCadastrados({
       } else if (selectedUser) {
         await updateUser(selectedUser.id, {
           nome: formData.nome,
-          email: formData.email,
           tipo: formData.tipo,
         });
         addToast("success", "Usuário atualizado com sucesso");
@@ -180,8 +183,8 @@ export function UsuariosCadastrados({
       setShowForm(false);
       resetForm();
       await onRefresh?.();
-    } catch (err: any) {
-      addToast("error", err?.message || "Erro ao salvar usuário");
+    } catch (err: unknown) {
+      addToast("error", getErrorMessage(err, "Erro ao salvar usuário"));
     } finally {
       setIsSaving(false);
     }
@@ -236,8 +239,14 @@ export function UsuariosCadastrados({
                     name="email"
                     value={formData.email}
                     onChange={handleFormChange}
+                    disabled={formMode === "edit"}
                     required
                   />
+                  {formMode === "edit" && (
+                    <small className="usuarios-field-hint">
+                      E-mail imutável para preservar o login do usuário.
+                    </small>
+                  )}
                 </label>
               </div>
               {formMode === "create" && (

@@ -5,19 +5,21 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(6px);
 }
 
 
 .usuarios-container {
-  background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  max-width: 50rem;
+  background: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.25rem;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.32);
+  max-width: 56rem;
   width: 90%;
   max-height: 85vh;
   display: flex;
@@ -30,7 +32,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  background: linear-gradient(to right, #060606, #04157a);
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.45), transparent 14rem),
+    linear-gradient(135deg, #020617, #04157a);
   color: white;
   border-radius: 1rem 1rem 0 0;
 }
@@ -80,16 +84,17 @@
   align-items: center;
   gap: 1.25rem;
   padding: 1.25rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
   transition: all 0.2s;
   background-color: white;
 }
 
 .usuario-card:hover {
-  border-color: #4f46e5;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  background-color: #f9fafb;
+  border-color: #93c5fd;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.1);
+  background-color: #ffffff;
+  transform: translateY(-1px);
 }
 
 
@@ -97,7 +102,7 @@
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: linear-gradient(to bottom, #060606, #04157a);
+  background: linear-gradient(135deg, #020617, #04157a 55%, #2563eb);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,10 +154,122 @@
 
 .usuario-badge {
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 600;
   flex-shrink: 0;
+}
+
+.usuarios-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.usuarios-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, #04157a, #2563eb);
+  border: 0;
+  border-radius: 0.85rem;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.usuarios-new-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.usuarios-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 1rem;
+}
+
+.usuarios-form h3 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.usuarios-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.usuarios-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.usuarios-form input,
+.usuarios-form select {
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  outline: none;
+}
+
+.usuarios-form input:focus,
+.usuarios-form select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.usuarios-form input:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+  background: #eef2f7;
+}
+
+.usuarios-field-hint {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.usuarios-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-secondary,
+.btn-primary {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 0.75rem;
+}
+
+.btn-secondary {
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #04157a, #2563eb);
+  border: 0;
 }
 
 .usuario-badge-admin {

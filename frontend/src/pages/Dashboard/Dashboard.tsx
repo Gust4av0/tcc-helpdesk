@@ -13,6 +13,7 @@ import { Messages } from "../../components/Messages/Messages";
 import { CadastrarCategoriasModal } from "../../components/ModalCategori/CadastrarCategoriasModal";
 import { TecnicosDisponiveis } from "../../components/AvailableTechnicians/TecnicosDisponiveis";
 import { UsuariosCadastrados } from "../../components/RegisteredUsers/UsuariosCadastrados";
+import { ProfileModal } from "../../components/ProfileModal/ProfileModal";
 
 import { TicketDetails } from "../../components/Tickdetails/TicketDetails";
 import { AtribuirChamado } from "../../components/AtribuirChamado";
@@ -43,9 +44,14 @@ import "./Dashboard.css";
 interface DashboardProps {
   user: AuthUser | null;
   onLogout: () => void;
+  onUserUpdate: (user: AuthUser) => void;
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({
+  user,
+  onLogout,
+  onUserUpdate,
+}: DashboardProps) {
   const { addToast } = useToast();
 
   const [activeMenuItem, setActiveMenuItem] = useState("dashboard");
@@ -59,6 +65,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [isCategoriasModalOpen, setIsCategoriasModalOpen] = useState(false);
   const [isTecnicosOpen, setIsTecnicosOpen] = useState(false);
   const [isUsuariosOpen, setIsUsuariosOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -159,7 +166,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           return false;
         }
 
-        const diff = now.getTime() - prazoAtendimento.getTime();
         if (dataFilter === "hoje") {
           const hoje = new Date(now);
           hoje.setHours(0, 0, 0, 0);
@@ -192,6 +198,26 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       return true;
     });
   }, [tickets, statusFilter, prioridadeFilter, dataFilter]);
+
+  const urgentTicketsCount = useMemo(
+    () =>
+      tickets.filter(
+        (ticket) => ticket.prioridade?.toUpperCase() === "URGENTE",
+      ).length,
+    [tickets],
+  );
+
+  const activeFiltersCount = [
+    statusFilter !== "todos",
+    prioridadeFilter !== "todas",
+    dataFilter !== "todas",
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setStatusFilter("todos");
+    setPrioridadeFilter("todas");
+    setDataFilter("todas");
+  };
 
   const loadTickets = async () => {
     try {
@@ -413,7 +439,11 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       />
 
       <div className="app-main-wrapper">
-        <TopBar user={user} onLogout={onLogout} />
+        <TopBar
+          user={user}
+          onLogout={onLogout}
+          onOpenProfile={() => setIsProfileOpen(true)}
+        />
 
         <main className="app-main-content">
           <div className="app-content-inner">
@@ -448,6 +478,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     value={computedDashboardData?.porStatus?.NOVO ?? 0}
                     icon={TicketIcon}
                     color="blue"
+                    trend="Entradas aguardando triagem"
                   />
                   <MetricCard
                     title="Chamados em Atendimento"
@@ -457,12 +488,21 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     }
                     icon={Users}
                     color="purple"
+                    trend="Atribuídos ou em andamento"
+                  />
+                  <MetricCard
+                    title="Urgentes"
+                    value={urgentTicketsCount}
+                    icon={Clock}
+                    color="orange"
+                    trend="Prioridade máxima na fila"
                   />
                   <MetricCard
                     title="Finalizados"
                     value={computedDashboardData?.porStatus?.FINALIZADO ?? 0}
                     icon={CheckCircle}
                     color="green"
+                    trend="Chamados concluídos"
                   />
                 </div>
 
@@ -470,9 +510,12 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   statusFilter={statusFilter}
                   prioridadeFilter={prioridadeFilter}
                   dataFilter={dataFilter}
+                  activeCount={activeFiltersCount}
+                  resultCount={filteredTickets.length}
                   onStatusChange={setStatusFilter}
                   onPrioridadeChange={setPrioridadeFilter}
                   onDataChange={setDataFilter}
+                  onClear={clearFilters}
                 />
 
                 <TicketTable
@@ -524,6 +567,13 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         onClose={() => setIsUsuariosOpen(false)}
         usuarios={users}
         onRefresh={loadUsers}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        user={user}
+        onClose={() => setIsProfileOpen(false)}
+        onProfileUpdated={onUserUpdate}
       />
 
       <TicketDetails

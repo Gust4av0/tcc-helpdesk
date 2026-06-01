@@ -7,6 +7,10 @@ import Home from "./pages/Home/Home";
 import { login, register, AuthUser } from "./services/auth";
 import { getStoredUser, setStoredToken, setStoredUser } from "./services/api";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -31,8 +35,8 @@ export default function App() {
       setStoredToken(response.token);
       setStoredUser(response.usuario);
       setPage("dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Erro ao fazer login.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Erro ao fazer login."));
     } finally {
       setLoading(false);
     }
@@ -49,8 +53,8 @@ export default function App() {
     try {
       await register(data);
       setPage("login");
-    } catch (err: any) {
-      setError(err?.message || "Erro ao cadastrar usuário.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Erro ao cadastrar usuário."));
     } finally {
       setLoading(false);
     }
@@ -61,6 +65,11 @@ export default function App() {
     setStoredUser(null);
     setUser(null);
     setPage("home");
+  };
+
+  const handleUserUpdate = (updatedUser: AuthUser) => {
+    setUser(updatedUser);
+    setStoredUser(updatedUser);
   };
 
   return (
@@ -86,7 +95,11 @@ export default function App() {
       )}
 
       {page === "dashboard" && (
-        <Dashboard user={user} onLogout={handleLogout} />
+        <Dashboard
+          user={user}
+          onLogout={handleLogout}
+          onUserUpdate={handleUserUpdate}
+        />
       )}
     </>
   );

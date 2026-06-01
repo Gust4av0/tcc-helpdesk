@@ -3,7 +3,9 @@ import {
   criarUsuario,
   listarUsuarios,
   buscarUsuario,
+  buscarPerfil,
   atualizarUsuario,
+  atualizarPerfil,
   deletarUsuario,
 } from "../controllers/usuarioController";
 import { authMiddleware } from "../middlewares/authMiddleware";
@@ -67,6 +69,9 @@ router.get("/", authMiddleware, verificarTipo(["ADMIN"]), listarUsuarios);
  *       200:
  *         description: Usuário encontrado
  */
+router.get("/me", authMiddleware, buscarPerfil);
+router.put("/me", authMiddleware, atualizarPerfil);
+
 router.get("/:id", authMiddleware, verificarTipo(["ADMIN"]), buscarUsuario);
 
 /**

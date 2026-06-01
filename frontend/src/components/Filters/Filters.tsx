@@ -5,25 +5,36 @@ interface FiltersProps {
   statusFilter: string;
   prioridadeFilter: string;
   dataFilter: string;
+  activeCount?: number;
+  resultCount?: number;
   onStatusChange: (value: string) => void;
   onPrioridadeChange: (value: string) => void;
   onDataChange: (value: string) => void;
+  onClear?: () => void;
 }
 
 export function Filters({
   statusFilter,
   prioridadeFilter,
   dataFilter,
+  activeCount = 0,
+  resultCount,
   onStatusChange,
   onPrioridadeChange,
   onDataChange,
+  onClear,
 }: FiltersProps) {
   return (
     <div className="filters-container">
       <div className="filters-wrapper">
         <div className="filters-label">
           <Filter />
-          <span>Filtros:</span>
+          <div>
+            <span>Filtros</span>
+            {typeof resultCount === "number" && (
+              <small>{resultCount} chamado(s) encontrados</small>
+            )}
+          </div>
         </div>
 
         <div className="filter-group">
@@ -72,6 +83,18 @@ export function Filters({
             <option value="mes">Último mês</option>
           </select>
         </div>
+
+        {onClear && (
+          <button
+            type="button"
+            className="filters-clear-btn"
+            onClick={onClear}
+            disabled={activeCount === 0}
+          >
+            Limpar filtros
+            {activeCount > 0 && <strong>{activeCount}</strong>}
+          </button>
+        )}
       </div>
     </div>
   );

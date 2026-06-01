@@ -19,9 +19,20 @@ export async function deleteUser(id: number) {
 
 export async function updateUser(
   id: number,
-  data: Partial<{ nome: string; email: string; tipo: string }>,
+  data: Partial<{ nome: string; tipo: string }>,
 ) {
   return apiRequest<Usuario>(`/usuarios/${id}`, {
+    method: "PUT",
+    body: data,
+  });
+}
+
+export async function getProfile() {
+  return apiRequest<Usuario>("/usuarios/me");
+}
+
+export async function updateProfile(data: Partial<{ nome: string; senha: string }>) {
+  return apiRequest<Usuario>("/usuarios/me", {
     method: "PUT",
     body: data,
   });

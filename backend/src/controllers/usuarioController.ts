@@ -51,6 +51,49 @@ export const buscarUsuario = async (req: Request, res: Response) => {
   res.json(usuario);
 };
 
+export const buscarPerfil = async (req: any, res: Response) => {
+  const usuario = await Usuario.findByPk(req.usuario.id, {
+    attributes: { exclude: ["senha"] },
+  });
+
+  if (!usuario) {
+    return res.status(404).json({ erro: "Não encontrado" });
+  }
+
+  res.json(usuario);
+};
+
+export const atualizarPerfil = async (req: any, res: Response) => {
+  const usuario = await Usuario.findByPk(req.usuario.id);
+
+  if (!usuario) {
+    return res.status(404).json({ erro: "Não encontrado" });
+  }
+
+  const { nome, senha } = req.body;
+
+  if (!nome && !senha) {
+    return res.status(400).json({ erro: "Informe nome ou senha para atualizar" });
+  }
+
+  const updates: any = {};
+
+  if (nome) {
+    updates.nome = nome;
+  }
+
+  if (senha) {
+    updates.senha = await bcrypt.hash(senha, 10);
+  }
+
+  await usuario.update(updates);
+
+  const usuarioAtualizado = usuario.toJSON();
+  delete usuarioAtualizado.senha;
+
+  res.json(usuarioAtualizado);
+};
+
 export const atualizarUsuario = async (req: any, res: Response) => {
   const usuario = await Usuario.findByPk(req.params.id);
 
@@ -62,9 +105,33 @@ export const atualizarUsuario = async (req: any, res: Response) => {
     return res.status(403).json({ erro: "Sem permissão" });
   }
 
-  await usuario.update(req.body);
+  if (
+    req.body.tipo &&
+    !["ADMIN", "SUPORTE", "CLIENTE"].includes(req.body.tipo)
+  ) {
+    return res.status(400).json({ erro: "Tipo inválido" });
+  }
 
-  res.json(usuario);
+  if (req.body.email && req.body.email !== usuario.email) {
+    return res.status(403).json({ erro: "O email não pode ser alterado" });
+  }
+
+  const updates: any = {};
+
+  if (req.body.nome) {
+    updates.nome = req.body.nome;
+  }
+
+  if (req.body.tipo) {
+    updates.tipo = req.body.tipo;
+  }
+
+  await usuario.update(updates);
+
+  const usuarioAtualizado = usuario.toJSON();
+  delete usuarioAtualizado.senha;
+
+  res.json(usuarioAtualizado);
 };
 
 export const deletarUsuario = async (req: Request, res: Response) => {
