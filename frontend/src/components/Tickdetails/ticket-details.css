@@ -653,11 +653,27 @@
   margin-top: 0.55rem;
 }
 
+.ticket-chat-image-button {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  cursor: zoom-in;
+  background: transparent;
+  border: 0;
+  border-radius: 0.9rem;
+}
+
+.ticket-chat-image-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 3px;
+}
+
 .ticket-chat-attachment img {
   max-width: 16rem;
   max-height: 13rem;
   border-radius: 0.9rem;
   border: 1px solid #e2e8f0;
+  object-fit: contain;
 }
 
 .ticket-chat-attachment a {
@@ -675,6 +691,47 @@
 .ticket-chat-attachment svg {
   width: 1rem;
   height: 1rem;
+}
+
+.ticket-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(15, 23, 42, 0.86);
+}
+
+.ticket-image-lightbox img {
+  max-width: min(96vw, 72rem);
+  max-height: 86vh;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+}
+
+.ticket-image-lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #ffffff;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 0.5rem;
+}
+
+.ticket-image-lightbox-close svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .ticket-chat-input-area {

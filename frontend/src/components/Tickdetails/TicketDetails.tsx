@@ -22,6 +22,14 @@ import {
 } from "../../services/message";
 import { listTicketLogs, TicketLog } from "../../services/ticketLog";
 import { useToast } from "../Toast/ToastContext";
+import {
+  isImageAttachment,
+  isPdfAttachment,
+  isSupportedAttachmentFile,
+  MAX_ATTACHMENT_BYTES,
+  openAttachment,
+  parseAttachment,
+} from "../../utils/attachments";
 import "./ticket-details.css";
 
 interface TicketDetailsProps {
@@ -77,22 +85,6 @@ function normalizeStatus(status: string) {
   return status?.toUpperCase().replace(/\s/g, "_");
 }
 
-function getAttachment(raw?: string): AttachmentPayload | null {
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return {
-      name: "anexo",
-      type: raw.startsWith("data:")
-        ? raw.split(";")[0].replace("data:", "")
-        : "application/octet-stream",
-      dataUrl: raw,
-    };
-  }
-}
-
 export function TicketDetails({
   isOpen,
   onClose,
@@ -110,6 +102,9 @@ export function TicketDetails({
   const [newMessage, setNewMessage] = useState("");
   const [selectedAttachment, setSelectedAttachment] =
     useState<AttachmentPayload | null>(null);
+  const [imagePreview, setImagePreview] = useState<AttachmentPayload | null>(
+    null,
+  );
   const [isSending, setIsSending] = useState(false);
 
   const ticketId = Number(ticket?.id);
@@ -122,6 +117,7 @@ export function TicketDetails({
     setActiveTab("resumo");
     setNewMessage("");
     setSelectedAttachment(null);
+    setImagePreview(null);
 
     const loadDetails = async () => {
       try {
@@ -290,21 +286,13 @@ export function TicketDetails({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "application/pdf",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!isSupportedAttachmentFile(file)) {
       addToast("error", "Tipo de arquivo não suportado. Use imagem ou PDF.");
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      addToast("error", "Arquivo muito grande. Máximo 8MB.");
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      addToast("error", "Arquivo muito grande. Máximo 50MB.");
       return;
     }
 
@@ -504,7 +492,8 @@ export function TicketDetails({
 
                 {messages.map((message) => {
                   const isOutgoing = message.usuario_id === currentUser?.id;
-                  const attachment = getAttachment(message.anexo);
+                  const attachment = parseAttachment(message.anexo);
+                  const isPdf = attachment ? isPdfAttachment(attachment) : false;
 
                   return (
                     <div
@@ -523,20 +512,34 @@ export function TicketDetails({
                       )}
                       {attachment && (
                         <div className="ticket-chat-attachment">
-                          {attachment.type.startsWith("image/") ? (
-                            <img
-                              src={attachment.dataUrl}
-                              alt={attachment.name}
-                            />
+                          {isImageAttachment(attachment) ? (
+                            <button
+                              type="button"
+                              className="ticket-chat-image-button"
+                              onClick={() => setImagePreview(attachment)}
+                              aria-label={`Abrir imagem ${attachment.name}`}
+                              title="Abrir imagem"
+                            >
+                              <img
+                                src={attachment.dataUrl}
+                                alt={attachment.name}
+                              />
+                            </button>
                           ) : (
                             <a
                               href={attachment.dataUrl}
                               target="_blank"
                               rel="noreferrer"
-                              download={attachment.name}
+                              download={isPdf ? undefined : attachment.name}
+                              onClick={(event) => {
+                                if (isPdf && attachment.dataUrl.startsWith("data:")) {
+                                  event.preventDefault();
+                                  openAttachment(attachment);
+                                }
+                              }}
                             >
                               <Paperclip />
-                              Abrir {attachment.name}
+                              {isPdf ? "Abrir PDF" : "Baixar"} {attachment.name}
                             </a>
                           )}
                         </div>
@@ -675,6 +678,33 @@ export function TicketDetails({
           )}
         </div>
       </div>
+
+      {imagePreview && (
+        <div
+          className="ticket-image-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Imagem ${imagePreview.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            setImagePreview(null);
+          }}
+        >
+          <button
+            type="button"
+            className="ticket-image-lightbox-close"
+            onClick={() => setImagePreview(null)}
+            aria-label="Fechar imagem"
+          >
+            <X />
+          </button>
+          <img
+            src={imagePreview.dataUrl}
+            alt={imagePreview.name}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

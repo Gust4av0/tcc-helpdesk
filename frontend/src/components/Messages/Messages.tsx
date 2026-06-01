@@ -1,9 +1,22 @@
 ﻿import { useEffect, useState } from "react";
-import { X, MessageSquare, ArrowLeft, Send } from "lucide-react";
+import { X, MessageSquare, ArrowLeft, Send, Paperclip } from "lucide-react";
 import { listTickets, Chamado } from "../../services/ticket";
-import { listMessages, sendMessage, Message } from "../../services/message";
+import {
+  AttachmentPayload,
+  listMessages,
+  sendMessage,
+  Message,
+} from "../../services/message";
 import { useToast } from "../Toast/ToastContext";
 import { AuthUser } from "../../services/auth";
+import {
+  isImageAttachment,
+  isPdfAttachment,
+  isSupportedAttachmentFile,
+  MAX_ATTACHMENT_BYTES,
+  openAttachment,
+  parseAttachment,
+} from "../../utils/attachments";
 import "./messages.css";
 
 interface MessagesProps {
@@ -17,11 +30,11 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
   const [selectedTicket, setSelectedTicket] = useState<Chamado | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [selectedAttachment, setSelectedAttachment] = useState<{
-    name: string;
-    type: string;
-    dataUrl: string;
-  } | null>(null);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<AttachmentPayload | null>(null);
+  const [imagePreview, setImagePreview] = useState<AttachmentPayload | null>(
+    null,
+  );
   const [showFinalizedTickets, setShowFinalizedTickets] = useState(false);
   const { addToast } = useToast();
 
@@ -116,21 +129,12 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
       return;
     }
 
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "application/pdf",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!isSupportedAttachmentFile(file)) {
       addToast("error", "Tipo de arquivo não suportado. Use imagem ou PDF.");
       return;
     }
 
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > MAX_ATTACHMENT_BYTES) {
       addToast("error", "Arquivo muito grande. Máximo 50MB.");
       return;
     }
@@ -243,20 +247,8 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                     ? "Cliente"
                     : "Suporte";
 
-                  let attachment: { name: string; type: string; dataUrl: string } | null = null;
-                  if (message.anexo) {
-                    try {
-                      attachment = JSON.parse(message.anexo);
-                    } catch {
-                      attachment = {
-                        name: "anexo",
-                        type: message.anexo.startsWith("data:")
-                          ? message.anexo.split(";")[0].replace("data:", "")
-                          : "application/octet-stream",
-                        dataUrl: message.anexo,
-                      };
-                    }
-                  }
+                  const attachment = parseAttachment(message.anexo);
+                  const isPdf = attachment ? isPdfAttachment(attachment) : false;
 
                   return (
                     <div
@@ -273,21 +265,36 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                       )}
                       {attachment && (
                         <div className="chat-message-attachment">
-                          {attachment.type.startsWith("image/") ? (
-                            <img
-                              src={attachment.dataUrl}
-                              alt={attachment.name}
-                              className="chat-attachment-image"
-                            />
+                          {isImageAttachment(attachment) ? (
+                            <button
+                              type="button"
+                              className="chat-attachment-image-button"
+                              onClick={() => setImagePreview(attachment)}
+                              aria-label={`Abrir imagem ${attachment.name}`}
+                              title="Abrir imagem"
+                            >
+                              <img
+                                src={attachment.dataUrl}
+                                alt={attachment.name}
+                                className="chat-attachment-image"
+                              />
+                            </button>
                           ) : (
                             <a
                               href={attachment.dataUrl}
                               target="_blank"
                               rel="noreferrer"
                               className="chat-attachment-link"
-                              download={attachment.type === "application/pdf" ? attachment.name : undefined}
+                              download={isPdf ? undefined : attachment.name}
+                              onClick={(event) => {
+                                if (isPdf && attachment.dataUrl.startsWith("data:")) {
+                                  event.preventDefault();
+                                  openAttachment(attachment);
+                                }
+                              }}
                             >
-                              Abrir {attachment.name}
+                              <Paperclip />
+                              {isPdf ? "Abrir PDF" : "Baixar"} {attachment.name}
                             </a>
                           )}
                         </div>
@@ -358,6 +365,33 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
           )}
         </div>
       </div>
+
+      {imagePreview && (
+        <div
+          className="chat-image-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Imagem ${imagePreview.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            setImagePreview(null);
+          }}
+        >
+          <button
+            type="button"
+            className="chat-image-lightbox-close"
+            onClick={() => setImagePreview(null)}
+            aria-label="Fechar imagem"
+          >
+            <X />
+          </button>
+          <img
+            src={imagePreview.dataUrl}
+            alt={imagePreview.name}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
