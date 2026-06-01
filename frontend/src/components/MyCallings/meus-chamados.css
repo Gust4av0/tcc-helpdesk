@@ -170,6 +170,27 @@
   color: #1e40af;
 }
 
+.chamado-card-actions {
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.atribuir-mim-btn {
+  background-color: #04157a;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.atribuir-mim-btn:hover {
+  background-color: #243e9f;
+}
+
 .status-badge.atribuido {
   background-color: #f3e8ff;
   color: #6b21a8;

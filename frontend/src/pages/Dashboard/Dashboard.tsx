@@ -155,6 +155,10 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   };
 
   const loadUsers = async () => {
+    if (user?.tipo !== "ADMIN") {
+      return;
+    }
+
     try {
       const result = await listUsers();
       setUsers(result);
@@ -168,7 +172,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     loadTickets();
     loadCategories();
     loadUsers();
-  }, []);
+  }, [user]);
 
   const handleTicketClick = (ticket: Ticket) => {
     setSelectedTicket(ticket);

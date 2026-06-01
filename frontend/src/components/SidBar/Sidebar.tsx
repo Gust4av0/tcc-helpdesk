@@ -22,6 +22,8 @@ interface SidebarProps {
 export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
+  const isSupportOrAdmin =
+    user?.tipo === "ADMIN" || user?.tipo === "SUPORTE";
   const isAdmin = user?.tipo === "ADMIN";
 
   const menuItems = [
@@ -30,7 +32,7 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
       label: "Dashboard",
       icon: LayoutDashboard,
     },
-    ...(isAdmin
+    ...(isSupportOrAdmin
       ? [
           {
             id: "meus-chamados",

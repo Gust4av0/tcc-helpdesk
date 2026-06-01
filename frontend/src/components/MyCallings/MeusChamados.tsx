@@ -1,7 +1,8 @@
 ﻿import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
-import { listTickets, Chamado } from "../../services/ticket";
+import { listTickets, assignTicket, Chamado } from "../../services/ticket";
 import { AuthUser } from "../../services/auth";
+import { useToast } from "../../components/Toast/ToastContext";
 import "./meus-chamados.css";
 
 interface MeusChamadosProps {
@@ -13,6 +14,8 @@ export function MeusChamados({ user }: MeusChamadosProps) {
   const [filterStatus, setFilterStatus] = useState<
     "todos" | "Novo" | "Em Atendimento" | "Finalizado"
   >("todos");
+
+  const { addToast } = useToast();
 
   const loadTickets = async () => {
     try {
@@ -32,7 +35,6 @@ export function MeusChamados({ user }: MeusChamadosProps) {
         if (user.tipo === "SUPORTE") {
           return (
             ticket.status === "NOVO" ||
-            ticket.status === "ATRIBUIDO" ||
             ticket.tecnico_id === user.id
           );
         }
@@ -49,6 +51,16 @@ export function MeusChamados({ user }: MeusChamadosProps) {
   useEffect(() => {
     loadTickets();
   }, [user]);
+
+  const handleAssignToMe = async (ticketId: number) => {
+    try {
+      await assignTicket(ticketId, user!.id);
+      addToast("success", "Chamado atribuído a você com sucesso");
+      loadTickets();
+    } catch (error: any) {
+      addToast("error", error?.message || "Erro ao atribuir chamado");
+    }
+  };
 
   const filteredTickets = tickets.filter((ticket) => {
     if (filterStatus === "todos") return true;
@@ -139,6 +151,18 @@ export function MeusChamados({ user }: MeusChamadosProps) {
                     : "N/D"}
                 </span>
               </div>
+
+              {user?.tipo === "SUPORTE" && ticket.status === "NOVO" && !ticket.tecnico_id && (
+                <div className="chamado-card-actions">
+                  <button
+                    type="button"
+                    className="atribuir-mim-btn"
+                    onClick={() => handleAssignToMe(Number(ticket.id))}
+                  >
+                    Atribuir a mim
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
