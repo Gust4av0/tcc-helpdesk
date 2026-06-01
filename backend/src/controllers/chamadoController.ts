@@ -20,6 +20,10 @@ export const criarChamado = async (req: any, res: Response) => {
       return res.status(400).json({ erro: "Categoria obrigatória" });
     }
 
+    if (!prioridade) {
+      return res.status(400).json({ erro: "Prioridade obrigatória" });
+    }
+
     const categoria = await Categoria.findByPk(categoria_id);
     if (!categoria) {
       return res.status(404).json({ erro: "Categoria não encontrada" });
@@ -57,6 +61,7 @@ export const criarChamado = async (req: any, res: Response) => {
 
     return res.status(201).json(chamado);
   } catch (error) {
+    console.error("Erro ao criar chamado:", error);
     res.status(500).json({ erro: "Erro ao criar chamado" });
   }
 };

@@ -1,35 +1,36 @@
-import { User, Mail, CreditCard, Lock } from 'lucide-react';
-import { AuthLayout } from '../../components/auth/AuthLayout';
-import { AuthHeader } from '../../components/auth/AuthHeader';
-import { AuthInput } from '../../components/auth/AuthInput';
-import { AuthButton } from '../../components/auth/AuthButton';
-import '../../components/auth/authform.css';
+import { User, Mail, CreditCard, Lock } from "lucide-react";
+import { AuthLayout } from "../../components/auth/AuthLayout";
+import { AuthHeader } from "../../components/auth/AuthHeader";
+import { AuthInput } from "../../components/auth/AuthInput";
+import { AuthButton } from "../../components/auth/AuthButton";
+import "../../components/auth/authform.css";
 
 interface RegisterProps {
   onNavigateToLogin?: () => void;
-  onSubmit?: (data: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    password: string;
-  }) => void;
+  onSubmit?: (data: { name: string; email: string; password: string }) => void;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export default function Register({ onNavigateToLogin, onSubmit }: RegisterProps) {
+export default function Register({
+  onNavigateToLogin,
+  onSubmit,
+  loading = false,
+  error,
+}: RegisterProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      cpfCnpj: formData.get('cpfCnpj') as string,
-      password: formData.get('password') as string,
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
     };
 
     if (onSubmit) {
       onSubmit(data);
     } else {
-      console.log('Register:', data);
+      console.log("Register:", data);
     }
   };
 
@@ -42,6 +43,8 @@ export default function Register({ onNavigateToLogin, onSubmit }: RegisterProps)
           <h2>Criar conta</h2>
           <p>Preencha os dados para se cadastrar</p>
         </div>
+
+        {error && <p className="auth-error">{error}</p>}
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <AuthInput
@@ -76,14 +79,14 @@ export default function Register({ onNavigateToLogin, onSubmit }: RegisterProps)
             icon={Lock}
           />
 
-          <AuthButton type="submit">
-            Cadastrar
+          <AuthButton type="submit" disabled={loading}>
+            {loading ? "Cadastrando..." : "Cadastrar"}
           </AuthButton>
         </form>
 
         <div className="auth-footer">
           <p>
-            Já tem uma conta?{' '}
+            Já tem uma conta?{" "}
             <button
               type="button"
               className="auth-link"

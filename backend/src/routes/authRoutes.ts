@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login } from "../controllers/authController";
+import { login, register } from "../controllers/authController";
 
 const router = Router();
 
@@ -27,5 +27,25 @@ const router = Router();
  *         description: Credenciais inválidas
  */
 router.post("/login", login);
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Criar conta de cliente
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           example:
+ *             nome: "Cliente Exemplo"
+ *             email: "cliente@exemplo.com"
+ *             senha: "123456"
+ *     responses:
+ *       201:
+ *         description: Conta criada com sucesso
+ */
+router.post("/register", register);
 
 export default router;

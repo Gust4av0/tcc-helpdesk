@@ -10,15 +10,19 @@ import {
   Users,
   User,
 } from "lucide-react";
+import { AuthUser } from "../../services/auth";
 import "./sidebar.css";
 
 interface SidebarProps {
   activeItem: string;
   onItemClick: (item: string) => void;
+  user: AuthUser | null;
 }
 
-export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
+export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+
+  const isAdmin = user?.tipo === "ADMIN";
 
   const menuItems = [
     {
@@ -26,21 +30,29 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
       label: "Dashboard",
       icon: LayoutDashboard,
     },
-    {
-      id: "meus-chamados", 
-      label: "Meus Chamados",
-      icon: ClipboardList,
-    },
+    ...(isAdmin
+      ? [
+          {
+            id: "meus-chamados",
+            label: "Meus Chamados",
+            icon: ClipboardList,
+          },
+        ]
+      : []),
     {
       id: "chat",
-      label: "Mensagens", 
+      label: "Mensagens",
       icon: MessageSquare,
     },
-    {
-      id: "configuracoes",
-      label: "Opções",
-      icon: Settings,
-    },
+    ...(isAdmin
+      ? [
+          {
+            id: "configuracoes",
+            label: "Opções",
+            icon: Settings,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -73,7 +85,6 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
 
                   {isOptionsOpen && (
                     <div className="sidebar-submenu">
-
                       <button
                         className="sidebar-subitem"
                         onClick={() => onItemClick("cadastrar-categorias")}
@@ -97,7 +108,6 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
                         <User />
                         Usuários Cadastrados
                       </button>
-
                     </div>
                   )}
                 </li>
@@ -108,10 +118,8 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
               <li key={item.id} className="sidebar-menu-item">
                 <button
                   onClick={() => onItemClick(item.id)}
-                  className={`sidebar-menu-button ${
-                    isActive ? "active" : ""
-                  }`}
-                  data-testid={`sidebar-${item.id}`} 
+                  className={`sidebar-menu-button ${isActive ? "active" : ""}`}
+                  data-testid={`sidebar-${item.id}`}
                 >
                   <Icon />
                   <span>{item.label}</span>
@@ -121,13 +129,6 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
           })}
         </ul>
       </nav>
-
-      <div className="sidebar-footer">
-        <div className="sidebar-support-card">
-          <p>Suporte Premium</p>
-          <p>Em breve...</p>
-        </div>
-      </div>
     </aside>
   );
 }

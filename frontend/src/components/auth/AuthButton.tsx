@@ -1,25 +1,26 @@
-import './authbutton.css';
+import "./authbutton.css";
 
 interface AuthButtonProps {
   children: React.ReactNode;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   onClick?: () => void;
-
-  'data-testid'?: string;
+  disabled?: boolean;
+  "data-testid"?: string;
 }
 
 export function AuthButton({
   children,
-  type = 'submit',
+  type = "submit",
   onClick,
-  'data-testid': testId,
+  disabled = false,
+  "data-testid": testId,
 }: AuthButtonProps) {
   return (
     <button
       type={type}
       className="auth-submit-btn"
       onClick={onClick}
-
+      disabled={disabled}
       data-testid={testId}
     >
       {children}

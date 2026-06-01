@@ -1,11 +1,14 @@
-import { X } from 'lucide-react';
-import { useState } from 'react';
-import { useToast } from '../Toast/ToastContext';
-import './open-ticket-modal.css';
+import { X } from "lucide-react";
+import { useState } from "react";
+import "./open-ticket-modal.css";
 
 interface OpenTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
+  categories?: {
+    id: number;
+    nome: string;
+  }[];
   onSubmit?: (data: {
     title: string;
     description: string;
@@ -14,37 +17,30 @@ interface OpenTicketModalProps {
   }) => void;
 }
 
-export function OpenTicketModal({ isOpen, onClose, onSubmit }: OpenTicketModalProps) {
+export function OpenTicketModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  categories,
+}: OpenTicketModalProps) {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    priority: '',
+    title: "",
+    description: "",
+    category: "",
+    priority: "",
   });
-
-  const { addToast } = useToast();
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     onSubmit?.(formData);
-
-    addToast('success', 'Chamado aberto com sucesso!');
-
-    setFormData({
-      title: '',
-      description: '',
-      category: '',
-      priority: '',
-    });
-
-    onClose();
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
 
@@ -67,7 +63,6 @@ export function OpenTicketModal({ isOpen, onClose, onSubmit }: OpenTicketModalPr
       data-testid="modal-overlay"
     >
       <div className="modal-container" data-testid="open-ticket-modal">
-        
         <div className="modal-header">
           <h2 data-testid="modal-title">Abrir Chamado</h2>
 
@@ -88,7 +83,6 @@ export function OpenTicketModal({ isOpen, onClose, onSubmit }: OpenTicketModalPr
             onSubmit={handleSubmit}
             data-testid="open-ticket-form"
           >
-
             <div className="form-field">
               <label htmlFor="title">Título</label>
               <input
@@ -127,11 +121,12 @@ export function OpenTicketModal({ isOpen, onClose, onSubmit }: OpenTicketModalPr
                 data-testid="select-category"
               >
                 <option value="">Selecione uma categoria</option>
-                <option value="Servidor">Servidor</option>
-                <option value="Rede">Rede</option>
-                <option value="Sistema">Sistema</option>
-                <option value="Hardware">Hardware</option>
-                <option value="Outros">Outros</option>
+                {categories?.length &&
+                  categories.map((categoria) => (
+                    <option key={categoria.id} value={categoria.nome}>
+                      {categoria.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -172,7 +167,6 @@ export function OpenTicketModal({ isOpen, onClose, onSubmit }: OpenTicketModalPr
                 Abrir Chamado
               </button>
             </div>
-
           </form>
         </div>
       </div>

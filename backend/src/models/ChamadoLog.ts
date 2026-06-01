@@ -24,12 +24,15 @@ ChamadoLog.init(
     },
     status_anterior: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     status_novo: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     usuario_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
     },
 
     acao: {

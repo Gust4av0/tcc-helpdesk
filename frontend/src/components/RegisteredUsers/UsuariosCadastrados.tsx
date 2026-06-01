@@ -1,34 +1,55 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, MoreVertical, Edit2, Trash2 } from 'lucide-react';
-import './usuarios-cadastrados.css';
-
-interface UsuariosCadastradosProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+﻿import { useState, useEffect } from "react";
+import {
+  User,
+  Mail,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  PlusCircle,
+} from "lucide-react";
+import { useToast } from "../Toast/ToastContext";
+import { deleteUser, createUser, updateUser } from "../../services/user";
+import "./usuarios-cadastrados.css";
 
 interface Usuario {
   id: number;
   nome: string;
   email: string;
-  cargo: 'Admin' | 'Técnico' | 'Cliente';
+  tipo: string;
 }
 
-const mockUsuarios: Usuario[] = [
-  { id: 1, nome: 'João Silva', email: 'joao.silva@empresa.com', cargo: 'Admin' },
-  { id: 2, nome: 'Maria Santos', email: 'maria.santos@empresa.com', cargo: 'Admin' },
-  { id: 3, nome: 'Carlos Mendes', email: 'carlos.mendes@helpdesk.com', cargo: 'Técnico' },
-  { id: 4, nome: 'Ana Paula Silva', email: 'ana.paula@helpdesk.com', cargo: 'Técnico' },
-  { id: 5, nome: 'Roberto Lima', email: 'roberto.lima@helpdesk.com', cargo: 'Técnico' },
-  { id: 6, nome: 'Pedro Costa', email: 'pedro.costa@empresa.com', cargo: 'Cliente' },
-  { id: 7, nome: 'Juliana Oliveira', email: 'juliana.oliveira@empresa.com', cargo: 'Cliente' },
-  { id: 8, nome: 'Fernando Alves', email: 'fernando.alves@empresa.com', cargo: 'Cliente' },
-  { id: 9, nome: 'Patricia Souza', email: 'patricia.souza@empresa.com', cargo: 'Cliente' },
-  { id: 10, nome: 'Ricardo Pereira', email: 'ricardo.pereira@empresa.com', cargo: 'Cliente' },
-];
+interface UsuarioForm {
+  nome: string;
+  email: string;
+  senha: string;
+  tipo: string;
+}
 
-export function UsuariosCadastrados({ isOpen, onClose }: UsuariosCadastradosProps) {
+interface UsuariosCadastradosProps {
+  isOpen: boolean;
+  onClose: () => void;
+  usuarios: Usuario[];
+  onRefresh?: () => Promise<void>;
+}
+
+export function UsuariosCadastrados({
+  isOpen,
+  onClose,
+  usuarios,
+  onRefresh,
+}: UsuariosCadastradosProps) {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [formData, setFormData] = useState<UsuarioForm>({
+    nome: "",
+    email: "",
+    senha: "",
+    tipo: "CLIENTE",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -38,49 +59,132 @@ export function UsuariosCadastrados({ isOpen, onClose }: UsuariosCadastradosProp
     };
 
     if (activeDropdown !== null) {
-      document.addEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
       return () => {
-        document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener("click", handleClickOutside);
       };
     }
   }, [activeDropdown]);
 
   if (!isOpen) return null;
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
+      setShowForm(false);
+      resetForm();
       onClose();
     }
   };
 
-  const getBadgeClass = (cargo: string) => {
-    switch (cargo) {
-      case 'Admin':
-        return 'usuario-badge-admin';
-      case 'Técnico':
-        return 'usuario-badge-tecnico';
-      case 'Cliente':
-        return 'usuario-badge-cliente';
+  const getBadgeClass = (tipo: string) => {
+    switch (tipo) {
+      case "ADMIN":
+        return "usuario-badge-admin";
+      case "SUPORTE":
+        return "usuario-badge-tecnico";
+      case "CLIENTE":
+        return "usuario-badge-cliente";
       default:
-        return '';
+        return "";
     }
   };
 
-  const toggleDropdown = (e: React.MouseEvent, id: number) => {
+  const toggleDropdown = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    id: number,
+  ) => {
     e.stopPropagation();
     setActiveDropdown(activeDropdown === id ? null : id);
   };
 
-  const handleEditar = (usuarioId: number) => {
-    console.log('Editar usuário', usuarioId);
-    setActiveDropdown(null);
-    
+  const resetForm = () => {
+    setSelectedUser(null);
+    setFormData({
+      nome: "",
+      email: "",
+      senha: "",
+      tipo: "CLIENTE",
+    });
+    setFormMode("create");
   };
 
-  const handleExcluir = (usuarioId: number) => {
-    console.log('Excluir usuário', usuarioId);
+  const handleCreateClick = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const handleEditClick = (usuario: Usuario) => {
+    setSelectedUser(usuario);
+    setFormMode("edit");
+    setFormData({
+      nome: usuario.nome,
+      email: usuario.email,
+      senha: "",
+      tipo: usuario.tipo,
+    });
+    setShowForm(true);
     setActiveDropdown(null);
-    
+  };
+
+  const handleExcluir = async (usuarioId: number) => {
+    try {
+      await deleteUser(usuarioId);
+      addToast("success", "Usuário excluído com sucesso");
+      setActiveDropdown(null);
+      await onRefresh?.();
+    } catch (err: any) {
+      addToast("error", err?.message || "Erro ao excluir usuário");
+    }
+  };
+
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.nome || !formData.email || !formData.tipo) {
+      addToast("error", "Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (formMode === "create" && !formData.senha) {
+      addToast("error", "Senha é obrigatória para novo usuário");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      if (formMode === "create") {
+        await createUser({
+          nome: formData.nome,
+          email: formData.email,
+          senha: formData.senha,
+          tipo: formData.tipo,
+        });
+        addToast("success", "Usuário cadastrado com sucesso");
+      } else if (selectedUser) {
+        await updateUser(selectedUser.id, {
+          nome: formData.nome,
+          email: formData.email,
+          tipo: formData.tipo,
+        });
+        addToast("success", "Usuário atualizado com sucesso");
+      }
+
+      setShowForm(false);
+      resetForm();
+      await onRefresh?.();
+    } catch (err: any) {
+      addToast("error", err?.message || "Erro ao salvar usuário");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -98,8 +202,92 @@ export function UsuariosCadastrados({ isOpen, onClose }: UsuariosCadastradosProp
         </div>
 
         <div className="usuarios-body">
+          <div className="usuarios-tools">
+            <button
+              type="button"
+              className="usuarios-new-btn"
+              onClick={handleCreateClick}
+            >
+              <PlusCircle />
+              Cadastrar usuário
+            </button>
+          </div>
+
+          {showForm && (
+            <form className="usuarios-form" onSubmit={handleFormSubmit}>
+              <h3>
+                {formMode === "create" ? "Cadastrar Usuário" : "Editar Usuário"}
+              </h3>
+              <div className="usuarios-form-row">
+                <label>
+                  Nome
+                  <input
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </label>
+              </div>
+              {formMode === "create" && (
+                <label>
+                  Senha
+                  <input
+                    type="password"
+                    name="senha"
+                    value={formData.senha}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </label>
+              )}
+              <label>
+                Tipo
+                <select
+                  name="tipo"
+                  value={formData.tipo}
+                  onChange={handleFormChange}
+                >
+                  <option value="CLIENTE">CLIENTE</option>
+                  <option value="SUPORTE">SUPORTE</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </label>
+              <div className="usuarios-form-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    resetForm();
+                    setShowForm(false);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={isSaving}
+                >
+                  {formMode === "create" ? "Cadastrar" : "Salvar"}
+                </button>
+              </div>
+            </form>
+          )}
+
           <div className="usuarios-list">
-            {mockUsuarios.map((usuario) => (
+            {usuarios.map((usuario) => (
               <div key={usuario.id} className="usuario-card">
                 <div className="usuario-avatar">
                   <User />
@@ -112,8 +300,8 @@ export function UsuariosCadastrados({ isOpen, onClose }: UsuariosCadastradosProp
                     <span>{usuario.email}</span>
                   </div>
                 </div>
-                <div className={`usuario-badge ${getBadgeClass(usuario.cargo)}`}>
-                  {usuario.cargo}
+                <div className={`usuario-badge ${getBadgeClass(usuario.tipo)}`}>
+                  {usuario.tipo}
                 </div>
                 <div className="usuario-actions">
                   <button
@@ -127,7 +315,7 @@ export function UsuariosCadastrados({ isOpen, onClose }: UsuariosCadastradosProp
                     <div className="usuario-dropdown">
                       <button
                         className="usuario-dropdown-item"
-                        onClick={() => handleEditar(usuario.id)}
+                        onClick={() => handleEditClick(usuario)}
                       >
                         <Edit2 />
                         <span>Editar usuário</span>

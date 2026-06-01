@@ -1,100 +1,70 @@
-import { useState } from 'react';
-import { X, MessageSquare, ArrowLeft, Send } from 'lucide-react';
-import './messages.css';
-
-interface Ticket {
-  id: string;
-  techName: string;
-}
-
-interface Message {
-  id: string;
-  sender: 'client' | 'tech';
-  text: string;
-  time: string;
-}
+﻿import { useEffect, useState } from "react";
+import { X, MessageSquare, ArrowLeft, Send } from "lucide-react";
+import { listTickets, Chamado } from "../../services/ticket";
+import { listMessages, sendMessage, Message } from "../../services/message";
+import { useToast } from "../Toast/ToastContext";
+import { AuthUser } from "../../services/auth";
+import "./messages.css";
 
 interface MessagesProps {
   isOpen: boolean;
   onClose: () => void;
+  user: AuthUser | null;
 }
 
-const mockTickets: Ticket[] = [
-  { id: '#2847', techName: 'Carlos Mendes' },
-  { id: '#2846', techName: 'Ana Paula' },
-  { id: '#2845', techName: 'Roberto Lima' },
-  { id: '#2844', techName: 'Carlos Mendes' },
-];
+export function Messages({ isOpen, onClose, user }: MessagesProps) {
+  const [tickets, setTickets] = useState<Chamado[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Chamado | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const { addToast } = useToast();
 
-const mockMessages: Record<string, Message[]> = {
-  '#2847': [
-    {
-      id: '1',
-      sender: 'client',
-      text: 'Olá, estou com problema no servidor',
-      time: '10:30',
-    },
-    {
-      id: '2',
-      sender: 'tech',
-      text: 'Olá! Vou verificar o problema. Pode me informar qual servidor?',
-      time: '10:32',
-    },
-    {
-      id: '3',
-      sender: 'client',
-      text: 'É o servidor de produção, não está respondendo',
-      time: '10:35',
-    },
-    {
-      id: '4',
-      sender: 'tech',
-      text: 'Entendi. Já estou verificando. Aguarde alguns minutos.',
-      time: '10:36',
-    },
-  ],
-  '#2846': [
-    {
-      id: '1',
-      sender: 'client',
-      text: 'Sistema apresentando erro ao fazer login',
-      time: '09:15',
-    },
-    {
-      id: '2',
-      sender: 'tech',
-      text: 'Bom dia! Qual mensagem de erro aparece?',
-      time: '09:20',
-    },
-  ],
-  '#2845': [
-    {
-      id: '1',
-      sender: 'client',
-      text: 'Internet está muito lenta',
-      time: '14:00',
-    },
-  ],
-  '#2844': [
-    {
-      id: '1',
-      sender: 'client',
-      text: 'Preciso de suporte urgente',
-      time: '11:00',
-    },
-    {
-      id: '2',
-      sender: 'tech',
-      text: 'Olá! Estou aqui para ajudar. Qual o problema?',
-      time: '11:02',
-    },
-  ],
-};
+  const loadTickets = async () => {
+    try {
+      const result = await listTickets();
+      const tickets = result.data;
 
-export function Messages({ isOpen, onClose }: MessagesProps) {
-  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Record<string, Message[]>>(mockMessages);
-  const [newMessage, setNewMessage] = useState('');
+      if (user?.tipo === "SUPORTE") {
+        setTickets(
+          tickets.filter(
+            (ticket) =>
+              ticket.status === "NOVO" || ticket.tecnico_id === user.id,
+          ),
+        );
+        return;
+      }
+
+      if (user?.tipo === "CLIENTE") {
+        setTickets(tickets.filter((ticket) => ticket.usuario_id === user.id));
+        return;
+      }
+
+      setTickets(tickets);
+    } catch {
+      addToast("error", "Erro ao carregar chamados");
+    }
+  };
+
+  const loadMessages = async (ticketId: number) => {
+    try {
+      const result = await listMessages(ticketId);
+      setMessages(result);
+    } catch {
+      setMessages([]);
+      addToast("error", "Erro ao carregar mensagens");
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadTickets();
+  }, [isOpen, user]);
+
+  useEffect(() => {
+    if (selectedTicket) {
+      loadMessages(Number(selectedTicket.id));
+    }
+  }, [selectedTicket]);
 
   if (!isOpen) return null;
 
@@ -104,38 +74,23 @@ export function Messages({ isOpen, onClose }: MessagesProps) {
     }
   };
 
-  const handleTicketClick = (ticketId: string) => {
-    setSelectedTicket(ticketId);
+  const handleTicketClick = (ticket: Chamado) => {
+    setSelectedTicket(ticket);
   };
 
-  const handleBackClick = () => {
+  const handleBack = () => {
     setSelectedTicket(null);
+    setMessages([]);
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedTicket) return;
-
-    const now = new Date();
-    const time = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-    const message: Message = {
-      id: Date.now().toString(),
-      sender: 'client',
-      text: newMessage,
-      time,
-    };
-
-    setMessages((prev) => ({
-      ...prev,
-      [selectedTicket]: [...(prev[selectedTicket] || []), message],
-    }));
-
-    setNewMessage('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
+  const handleSend = async () => {
+    if (!selectedTicket || !newMessage.trim()) return;
+    try {
+      await sendMessage(Number(selectedTicket.id), newMessage.trim());
+      setNewMessage("");
+      loadMessages(Number(selectedTicket.id));
+    } catch {
+      addToast("error", "Erro ao enviar mensagem");
     }
   };
 
@@ -143,7 +98,9 @@ export function Messages({ isOpen, onClose }: MessagesProps) {
     <div className="messages-overlay" onClick={handleOverlayClick}>
       <div className="messages-container">
         <div className="messages-header">
-          <h2>{selectedTicket ? `Chamado ${selectedTicket}` : 'Mensagens'}</h2>
+          <h2>
+            {selectedTicket ? `Chamado ${selectedTicket.id}` : "Mensagens"}
+          </h2>
           <button
             type="button"
             className="messages-close-btn"
@@ -157,101 +114,83 @@ export function Messages({ isOpen, onClose }: MessagesProps) {
         <div className="messages-body">
           {!selectedTicket ? (
             <div className="ticket-list">
-              {mockTickets.map((ticket) => (
+              {tickets.map((ticket) => (
                 <div
                   key={ticket.id}
                   className="ticket-list-item"
-                  onClick={() => handleTicketClick(ticket.id)}
+                  onClick={() => handleTicketClick(ticket)}
                 >
                   <div className="ticket-list-item-info">
-                    <span className="ticket-list-item-id">{ticket.id}</span>
-                    <span className="ticket-list-item-tech">{ticket.techName}</span>
+                    <span className="ticket-list-item-id">#{ticket.id}</span>
+                    <span className="ticket-list-item-tech">
+                      {ticket.categoria?.nome ?? "Sem categoria"}
+                    </span>
                   </div>
                   <MessageSquare className="ticket-list-item-icon" />
                 </div>
               ))}
             </div>
           ) : (
-            <ChatView
-              ticketId={selectedTicket}
-              techName={mockTickets.find((t) => t.id === selectedTicket)?.techName || ''}
-              messages={messages[selectedTicket] || []}
-              newMessage={newMessage}
-              onBackClick={handleBackClick}
-              onMessageChange={setNewMessage}
-              onSendMessage={handleSendMessage}
-              onKeyPress={handleKeyPress}
-            />
+            <div className="chat-container">
+              <div className="chat-header">
+                <button
+                  type="button"
+                  className="chat-back-btn"
+                  onClick={handleBack}
+                  aria-label="Voltar"
+                >
+                  <ArrowLeft />
+                </button>
+                <div className="chat-header-info">
+                  <h3>{selectedTicket.titulo}</h3>
+                  <p>{selectedTicket.categoria?.nome ?? "Chamado"}</p>
+                </div>
+              </div>
+
+              <div className="chat-messages">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`chat-message ${message.usuario_id === selectedTicket.usuario_id ? "client" : "tech"}`}
+                  >
+                    <div className="chat-message-sender">
+                      {message.usuario_id === selectedTicket.usuario_id
+                        ? "Você"
+                        : "Suporte"}
+                    </div>
+                    <div className="chat-message-bubble">
+                      {message.mensagem}
+                    </div>
+                    <div className="chat-message-time">
+                      {new Date(message.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="chat-input-container">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                  className="chat-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSend();
+                  }}
+                />
+                <button
+                  type="button"
+                  className="chat-send-btn"
+                  onClick={handleSend}
+                >
+                  <Send />
+                  Enviar
+                </button>
+              </div>
+            </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-interface ChatViewProps {
-  ticketId: string;
-  techName: string;
-  messages: Message[];
-  newMessage: string;
-  onBackClick: () => void;
-  onMessageChange: (value: string) => void;
-  onSendMessage: () => void;
-  onKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
-
-function ChatView({
-  ticketId,
-  techName,
-  messages,
-  newMessage,
-  onBackClick,
-  onMessageChange,
-  onSendMessage,
-  onKeyPress,
-}: ChatViewProps) {
-  return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <button
-          type="button"
-          className="chat-back-btn"
-          onClick={onBackClick}
-          aria-label="Voltar"
-        >
-          <ArrowLeft />
-        </button>
-        <div className="chat-header-info">
-          <h3>{ticketId}</h3>
-          <p>{techName}</p>
-        </div>
-      </div>
-
-      <div className="chat-messages">
-        {messages.map((message) => (
-          <div key={message.id} className={`chat-message ${message.sender}`}>
-            <div className="chat-message-sender">
-              {message.sender === 'client' ? 'Você' : techName}
-            </div>
-            <div className="chat-message-bubble">{message.text}</div>
-            <div className="chat-message-time">{message.time}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="chat-input-container">
-        <input
-          type="text"
-          className="chat-input"
-          placeholder="Digite sua mensagem..."
-          value={newMessage}
-          onChange={(e) => onMessageChange(e.target.value)}
-          onKeyPress={onKeyPress}
-        />
-        <button type="button" className="chat-send-btn" onClick={onSendMessage}>
-          <Send />
-          Enviar
-        </button>
       </div>
     </div>
   );

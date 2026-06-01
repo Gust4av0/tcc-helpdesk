@@ -1,22 +1,30 @@
-import { X, Calendar, AlertCircle, Clock, User, FileText, Activity } from 'lucide-react';
-import './ticket-details.css';
+import {
+  X,
+  Calendar,
+  AlertCircle,
+  Clock,
+  User,
+  FileText,
+  Activity,
+} from "lucide-react";
+import "./ticket-details.css";
 
 interface TicketDetailsProps {
   isOpen: boolean;
   onClose: () => void;
   ticket: {
-    id: string;
+    id: string | number;
     titulo: string;
     descricao: string;
-    categoria: string;
-    cliente: string;
-    status: 'Novo' | 'Atribuído' | 'Em Atendimento' | 'Finalizado';
-    prioridade: 'Baixa' | 'Média' | 'Alta' | 'Urgente';
-    sla: 'no-prazo' | 'proximo' | 'atrasado';
-    slaRestante: string;
-    dataAbertura: string;
-    tecnico: string;
-    historico: Array<{
+    categoria?: string | { id: number; nome: string };
+    cliente?: string;
+    status: "Novo" | "Atribuído" | "Em Atendimento" | "Finalizado" | string;
+    prioridade: "Baixa" | "Média" | "Alta" | "Urgente" | string;
+    sla?: "no-prazo" | "proximo" | "atrasado" | string;
+    slaRestante?: string;
+    dataAbertura?: string;
+    tecnico?: string | { id: number; nome: string } | null;
+    historico?: Array<{
       data: string;
       acao: string;
       responsavel: string;
@@ -27,36 +35,47 @@ interface TicketDetailsProps {
 export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
   if (!isOpen || !ticket) return null;
 
+  const categoriaLabel =
+    typeof ticket.categoria === "string"
+      ? ticket.categoria
+      : (ticket.categoria?.nome ?? "Categoria");
+  const tecnicoLabel =
+    typeof ticket.tecnico === "string"
+      ? ticket.tecnico
+      : (ticket.tecnico?.nome ?? "Não atribuído");
+  const slaType = ticket.sla ?? "no-prazo";
+  const slaRemaining = ticket.slaRestante ?? "N/D";
+
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  const statusClassMap = {
-    'Novo': 'novo',
-    'Atribuído': 'atribuido',
-    'Em Atendimento': 'em-atendimento',
-    'Finalizado': 'finalizado',
+  const statusClassMap: Record<string, string> = {
+    Novo: "novo",
+    Atribuído: "atribuido",
+    "Em Atendimento": "em-atendimento",
+    Finalizado: "finalizado",
   };
 
-  const prioridadeClassMap = {
-    'Baixa': 'baixa',
-    'Média': 'media',
-    'Alta': 'alta',
-    'Urgente': 'urgente',
+  const prioridadeClassMap: Record<string, string> = {
+    Baixa: "baixa",
+    Média: "media",
+    Alta: "alta",
+    Urgente: "urgente",
   };
 
-  const slaClassMap = {
-    'no-prazo': 'no-prazo',
-    'proximo': 'proximo',
-    'atrasado': 'atrasado',
+  const slaClassMap: Record<string, string> = {
+    "no-prazo": "no-prazo",
+    proximo: "proximo",
+    atrasado: "atrasado",
   };
 
-  const slaTextMap = {
-    'no-prazo': 'No prazo',
-    'proximo': 'Próximo do limite',
-    'atrasado': 'Atrasado',
+  const slaTextMap: Record<string, string> = {
+    "no-prazo": "No prazo",
+    proximo: "Próximo do limite",
+    atrasado: "Atrasado",
   };
 
   return (
@@ -86,21 +105,27 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
             <div className="ticket-details-grid">
               <div className="ticket-details-field">
                 <label>Categoria</label>
-                <div className="ticket-details-value">{ticket.categoria}</div>
+                <div className="ticket-details-value">{categoriaLabel}</div>
               </div>
               <div className="ticket-details-field">
                 <label>Cliente</label>
-                <div className="ticket-details-value">{ticket.cliente}</div>
+                <div className="ticket-details-value">
+                  {ticket.cliente ?? "Cliente"}
+                </div>
               </div>
               <div className="ticket-details-field">
                 <label>Status</label>
-                <span className={`status-badge ${statusClassMap[ticket.status]}`}>
+                <span
+                  className={`status-badge ${statusClassMap[ticket.status]}`}
+                >
                   {ticket.status}
                 </span>
               </div>
               <div className="ticket-details-field">
                 <label>Prioridade</label>
-                <span className={`prioridade-badge ${prioridadeClassMap[ticket.prioridade]}`}>
+                <span
+                  className={`prioridade-badge ${prioridadeClassMap[ticket.prioridade]}`}
+                >
                   {ticket.prioridade}
                 </span>
               </div>
@@ -108,31 +133,27 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
                 <label>Data de Abertura</label>
                 <div className="ticket-details-value">
                   <Calendar className="icon-small" />
-                  {ticket.dataAbertura}
+                  {ticket.dataAbertura ?? "N/D"}
                 </div>
               </div>
               <div className="ticket-details-field">
                 <label>SLA</label>
-                <div className={`sla-badge ${slaClassMap[ticket.sla]}`}>
+                <div className={`sla-badge ${slaClassMap[slaType]}`}>
                   <Clock className="icon-small" />
-                  {slaTextMap[ticket.sla]} - {ticket.slaRestante}
+                  {slaTextMap[slaType]} - {slaRemaining}
                 </div>
               </div>
             </div>
           </section>
 
-         
           <section className="ticket-details-section">
             <h3 className="ticket-details-section-title">
               <AlertCircle />
               Descrição do Problema
             </h3>
-            <div className="ticket-details-description">
-              {ticket.descricao}
-            </div>
+            <div className="ticket-details-description">{ticket.descricao}</div>
           </section>
 
-          
           <section className="ticket-details-section">
             <h3 className="ticket-details-section-title">
               <User />
@@ -141,22 +162,23 @@ export function TicketDetails({ isOpen, onClose, ticket }: TicketDetailsProps) {
             <div className="ticket-details-field">
               <label>Técnico Responsável</label>
               <div className="ticket-details-tecnico">
-                <div className={`tecnico-avatar ${ticket.tecnico === 'Não atribuído' ? 'sem-tecnico' : ''}`}>
+                <div
+                  className={`tecnico-avatar ${tecnicoLabel === "Não atribuído" ? "sem-tecnico" : ""}`}
+                >
                   <User />
                 </div>
-                <span>{ticket.tecnico}</span>
+                <span>{tecnicoLabel}</span>
               </div>
             </div>
           </section>
 
-         
           <section className="ticket-details-section">
             <h3 className="ticket-details-section-title">
               <Activity />
               Histórico de Atividades
             </h3>
             <div className="ticket-details-historico">
-              {ticket.historico.map((item, index) => (
+              {(ticket.historico ?? []).map((item, index) => (
                 <div key={index} className="historico-item">
                   <div className="historico-dot"></div>
                   <div className="historico-content">
