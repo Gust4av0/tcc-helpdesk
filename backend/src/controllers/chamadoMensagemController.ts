@@ -16,7 +16,7 @@ export const criarMensagem = async (req: any, res: Response) => {
       return res.status(404).json({ erro: "Chamado não encontrado" });
     }
 
-    if (chamado.status === "FINALIZADO") {
+    if (chamado.status === "FINALIZADO" || chamado.status === "FECHADO") {
       return res.status(400).json({ erro: "Chamado finalizado" });
     }
 
@@ -47,6 +47,7 @@ export const criarMensagem = async (req: any, res: Response) => {
       usuario_id: req.usuario.id,
       mensagem: mensagem || "",
       anexo: attachmentData,
+      created_at: new Date(),
     });
 
     res.status(201).json(msg);

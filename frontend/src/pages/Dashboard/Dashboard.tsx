@@ -89,7 +89,21 @@ export default function Dashboard({
   const [openTicketsFocusKey, setOpenTicketsFocusKey] = useState(0);
   const hasCategories = categories.length > 0;
 
+  const closeAllOverlays = () => {
+    setIsModalOpen(false);
+    setIsMessagesOpen(false);
+    setIsCategoriasModalOpen(false);
+    setIsTecnicosOpen(false);
+    setIsUsuariosOpen(false);
+    setIsProfileOpen(false);
+    setIsTicketDetailsOpen(false);
+    setIsAtribuirOpen(false);
+    setSelectedTicket(null);
+    setSelectedTecnico(null);
+  };
+
   const handleMenuClick = (item: string) => {
+    closeAllOverlays();
     setActiveMenuItem(item);
 
     if (item === "chat") setIsMessagesOpen(true);
@@ -124,6 +138,7 @@ export default function Dashboard({
         ATRIBUIDO: 0,
         EM_ATENDIMENTO: 0,
         FINALIZADO: 0,
+        FECHADO: 0,
       } as Record<string, number>,
     );
 
@@ -134,6 +149,7 @@ export default function Dashboard({
         ATRIBUIDO: statusCounts.ATRIBUIDO,
         EM_ATENDIMENTO: statusCounts.EM_ATENDIMENTO,
         FINALIZADO: statusCounts.FINALIZADO,
+        FECHADO: statusCounts.FECHADO,
       },
     } as DashboardData;
   }, [dashboardData, newTickets, tickets, user]);
@@ -158,6 +174,7 @@ export default function Dashboard({
             novo: "NOVO",
             atribuido: "ATRIBUIDO",
             finalizado: "FINALIZADO",
+            fechado: "FECHADO",
           }[statusFilter as string];
 
           if (selectedStatus && status !== selectedStatus) {
@@ -287,6 +304,8 @@ export default function Dashboard({
   };
 
   useEffect(() => {
+    closeAllOverlays();
+    setActiveMenuItem("dashboard");
     loadDashboardData();
     loadTickets();
     loadCategories();
@@ -476,17 +495,18 @@ export default function Dashboard({
   const handleUpdateTicketStatus = async (
     ticketId: string | number,
     status: string,
+    observacao?: string,
   ) => {
     try {
       const rawId =
         typeof ticketId === "string"
           ? Number(ticketId.replace("#", ""))
           : ticketId;
-      await updateTicketStatus(rawId, status);
+      await updateTicketStatus(rawId, status, observacao);
       loadTickets();
       loadDashboardData();
-    } catch {
-      addToast("error", "Erro ao atualizar status do chamado");
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -561,7 +581,10 @@ export default function Dashboard({
                   />
                   <MetricCard
                     title="Finalizados"
-                    value={computedDashboardData?.porStatus?.FINALIZADO ?? 0}
+                    value={
+                      (computedDashboardData?.porStatus?.FINALIZADO ?? 0) +
+                      (computedDashboardData?.porStatus?.FECHADO ?? 0)
+                    }
                     icon={CheckCircle}
                     color="green"
                     trend="Chamados concluídos"
@@ -610,7 +633,9 @@ export default function Dashboard({
         isOpen={isMessagesOpen}
         onClose={() => {
           setIsMessagesOpen(false);
-          setActiveMenuItem("dashboard");
+          if (activeMenuItem === "chat") {
+            setActiveMenuItem("dashboard");
+          }
         }}
         user={user}
       />

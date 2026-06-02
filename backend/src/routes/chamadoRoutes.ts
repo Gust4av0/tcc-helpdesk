@@ -117,7 +117,7 @@ router.post("/", authMiddleware, criarChamado);
 router.put(
   "/:id",
   authMiddleware,
-  verificarTipo(["SUPORTE", "ADMIN"]),
+  verificarTipo(["CLIENTE", "SUPORTE", "ADMIN"]),
   atualizarChamado,
 );
 

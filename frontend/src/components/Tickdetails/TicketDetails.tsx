@@ -40,12 +40,18 @@ interface TicketDetailsProps {
     tipo: string;
   } | null;
   onFinalize?: (ticketId: number) => Promise<void>;
-  onStatusChange?: (ticketId: number, status: string) => Promise<void>;
+  onStatusChange?: (
+    ticketId: number,
+    status: string,
+    observacao?: string,
+  ) => Promise<void>;
   ticket: {
     id: string | number;
     titulo: string;
     descricao: string;
-    categoria?: string | { id: number; nome: string };
+    categoria?:
+      | string
+      | { id?: number; nome: string; sla_atendimento?: number; sla_resolucao?: number };
     cliente?: string;
     usuario?: { id?: number; nome: string };
     usuario_id?: number;
@@ -54,10 +60,11 @@ interface TicketDetailsProps {
     sla?: "no-prazo" | "proximo" | "atrasado" | string;
     slaRestante?: string;
     dataAbertura?: string;
+    data_abertura?: string;
     created_at?: string;
     prazo_atendimento?: string;
     prazo_resolucao?: string;
-    tecnico?: string | { id: number; nome: string } | null;
+    tecnico?: string | { id?: number; nome: string } | null;
     tecnico_id?: number | null;
     historico?: Array<{
       data: string;
@@ -106,16 +113,20 @@ export function TicketDetails({
     null,
   );
   const [isSending, setIsSending] = useState(false);
+  const [validationNote, setValidationNote] = useState("");
 
   const ticketId = Number(ticket?.id);
   const status = normalizeStatus(ticket?.status ?? "");
   const isFinalized = status === "FINALIZADO";
+  const isClosed = status === "FECHADO";
+  const isEnded = isFinalized || isClosed;
 
   useEffect(() => {
     if (!isOpen || !ticket) return;
 
     setActiveTab("resumo");
     setNewMessage("");
+    setValidationNote("");
     setSelectedAttachment(null);
     setImagePreview(null);
 
@@ -161,7 +172,22 @@ export function TicketDetails({
       : (ticket.tecnico?.nome ?? "Não atribuído");
   const clienteLabel = ticket.cliente ?? ticket.usuario?.nome ?? "Cliente";
   const requesterId = ticket.usuario_id ?? ticket.usuario?.id;
-  const dataAbertura = ticket.dataAbertura ?? ticket.created_at;
+  const categoriaSlaResolucao =
+    typeof ticket.categoria === "string"
+      ? undefined
+      : ticket.categoria?.sla_resolucao;
+  const fallbackDataAbertura =
+    ticket.prazo_resolucao && categoriaSlaResolucao
+      ? new Date(
+          new Date(ticket.prazo_resolucao).getTime() -
+            categoriaSlaResolucao * 3600000,
+        ).toISOString()
+      : undefined;
+  const dataAbertura =
+    ticket.dataAbertura ??
+    ticket.data_abertura ??
+    ticket.created_at ??
+    fallbackDataAbertura;
   const prazoAtendimento = ticket.prazo_atendimento;
   const prazoResolucao = ticket.prazo_resolucao;
 
@@ -176,6 +202,7 @@ export function TicketDetails({
     ATRIBUIDO: "atribuido",
     EM_ATENDIMENTO: "em-atendimento",
     FINALIZADO: "finalizado",
+    FECHADO: "fechado",
   };
 
   const statusLabelMap: Record<string, string> = {
@@ -183,6 +210,7 @@ export function TicketDetails({
     ATRIBUIDO: "ATRIBUÍDO",
     EM_ATENDIMENTO: "EM ATENDIMENTO",
     FINALIZADO: "FINALIZADO",
+    FECHADO: "FECHADO",
   };
 
   const prioridadeClassMap: Record<string, string> = {
@@ -211,7 +239,14 @@ export function TicketDetails({
   );
 
   const canReopen = Boolean(
-    onStatusChange && currentUser?.tipo === "ADMIN" && isFinalized,
+    onStatusChange && currentUser?.tipo === "ADMIN" && isEnded,
+  );
+
+  const canClientValidate = Boolean(
+    onStatusChange &&
+      currentUser?.tipo === "CLIENTE" &&
+      currentUser.id === requesterId &&
+      isFinalized,
   );
 
   const canFinalize = Boolean(
@@ -224,11 +259,38 @@ export function TicketDetails({
 
   const canChat = Boolean(
         currentUser &&
-      !isFinalized &&
+      !isEnded &&
       (currentUser.tipo === "ADMIN" ||
         currentUser.id === requesterId ||
         currentUser.id === ticket.tecnico_id),
   );
+
+  const handleClientValidation = async (
+    nextStatus: "EM_ATENDIMENTO" | "FECHADO",
+  ) => {
+    const note = validationNote.trim();
+
+    if (note.length < 5) {
+      addToast("warning", "Informe uma descrição com pelo menos 5 caracteres.");
+      return;
+    }
+
+    try {
+      await onStatusChange?.(ticketId, nextStatus, note);
+      addToast(
+        "success",
+        nextStatus === "FECHADO"
+          ? "Chamado aprovado e fechado."
+          : "Chamado reaberto para atendimento.",
+      );
+      onClose();
+    } catch (error) {
+      addToast(
+        "error",
+        error instanceof Error ? error.message : "Erro ao validar chamado.",
+      );
+    }
+  };
 
   const handleStatusChange = async (nextStatus: string) => {
     try {
@@ -442,7 +504,7 @@ export function TicketDetails({
                     <label>Técnico Responsável</label>
                     <strong>{tecnicoLabel}</strong>
                     <span>
-                      {isFinalized
+                      {isEnded
                         ? "Chamado encerrado"
                         : "Acompanhamento disponível na aba Conversa"}
                     </span>
@@ -463,10 +525,10 @@ export function TicketDetails({
                 </div>
                 <span
                   className={`ticket-chat-status ${
-                    isFinalized ? "closed" : "open"
+                    isEnded ? "closed" : "open"
                   }`}
                 >
-                  {isFinalized ? "Encerrado" : "Aberto"}
+                  {isEnded ? "Encerrado" : "Aberto"}
                 </span>
               </div>
 
@@ -553,8 +615,10 @@ export function TicketDetails({
               {!canChat && (
                 <div className="ticket-chat-locked">
                   {isFinalized
-                    ? "Chamado finalizado. Reabra para continuar a conversa."
-                    : "Você não tem permissão para enviar mensagens neste chamado."}
+                    ? "Chamado finalizado. Valide o atendimento para fechar ou reabrir."
+                    : isClosed
+                      ? "Chamado fechado. Não é possível enviar mensagens."
+                      : "Você não tem permissão para enviar mensagens neste chamado."}
                 </div>
               )}
 
@@ -642,10 +706,45 @@ export function TicketDetails({
           )}
         </div>
 
+        {canClientValidate && (
+          <div className="ticket-client-validation">
+            <label htmlFor="ticket-validation-note">
+              Descrição da validação
+            </label>
+            <textarea
+              id="ticket-validation-note"
+              value={validationNote}
+              onChange={(event) => setValidationNote(event.target.value)}
+              placeholder="Descreva se o serviço foi aprovado ou o que ainda precisa ser ajustado."
+              rows={3}
+            />
+          </div>
+        )}
+
         <div className="ticket-details-footer">
           <button onClick={onClose} className="btn-secondary">
             Fechar
           </button>
+          {canClientValidate && (
+            <>
+              <button
+                type="button"
+                className="btn-secondary action"
+                onClick={() => handleClientValidation("EM_ATENDIMENTO")}
+              >
+                <RotateCcw />
+                Reabrir
+              </button>
+              <button
+                type="button"
+                className="btn-primary action success"
+                onClick={() => handleClientValidation("FECHADO")}
+              >
+                <CheckCircle />
+                Aprovar
+              </button>
+            </>
+          )}
           {canReopen && (
             <button
               type="button"

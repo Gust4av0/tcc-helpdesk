@@ -50,6 +50,7 @@ export function Filters({
             <option value="atribuido">Atribuído</option>
             <option value="em-atendimento">Em Atendimento</option>
             <option value="finalizado">Finalizado</option>
+            <option value="fechado">Fechado</option>
           </select>
         </div>
 

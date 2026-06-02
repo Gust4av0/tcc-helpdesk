@@ -40,7 +40,7 @@ const iniciarServidor = async () => {
     await sequelize.authenticate();
     console.log("Banco conectado com sucesso");
 
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     console.log("Banco sincronizado");
 
     await seed();

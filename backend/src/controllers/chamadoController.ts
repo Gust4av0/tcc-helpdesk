@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
 import { registrarLog } from "../utils/logChamado";
@@ -9,34 +9,34 @@ export const criarChamado = async (req: any, res: Response) => {
     const { titulo, descricao, categoria_id, prioridade } = req.body;
 
     if (!titulo || titulo.length < 5) {
-      return res.status(400).json({ erro: "Título inválido" });
+      return res.status(400).json({ erro: "Titulo invalido" });
     }
 
     if (!descricao || descricao.length < 10) {
-      return res.status(400).json({ erro: "Descrição inválida" });
+      return res.status(400).json({ erro: "Descricao invalida" });
     }
 
     if (!categoria_id) {
-      return res.status(400).json({ erro: "Categoria obrigatória" });
+      return res.status(400).json({ erro: "Categoria obrigatoria" });
     }
 
     if (!prioridade) {
-      return res.status(400).json({ erro: "Prioridade obrigatória" });
+      return res.status(400).json({ erro: "Prioridade obrigatoria" });
     }
 
     const categoria = await Categoria.findByPk(categoria_id);
     if (!categoria) {
-      return res.status(404).json({ erro: "Categoria não encontrada" });
+      return res.status(404).json({ erro: "Categoria nao encontrada" });
     }
 
     const agora = new Date();
 
     const prazo_atendimento = new Date(
-      agora.getTime() + categoria.getDataValue("sla_atendimento") * 3600000
+      agora.getTime() + categoria.getDataValue("sla_atendimento") * 3600000,
     );
 
     const prazo_resolucao = new Date(
-      agora.getTime() + categoria.getDataValue("sla_resolucao") * 3600000
+      agora.getTime() + categoria.getDataValue("sla_resolucao") * 3600000,
     );
 
     const chamado = await Chamado.create({
@@ -45,6 +45,7 @@ export const criarChamado = async (req: any, res: Response) => {
       usuario_id: req.usuario.id,
       categoria_id,
       prioridade,
+      data_abertura: agora,
       prazo_atendimento,
       prazo_resolucao,
       status: "NOVO",
@@ -111,14 +112,14 @@ export const buscarChamado = async (req: any, res: Response) => {
     });
 
     if (!chamado) {
-      return res.status(404).json({ erro: "Chamado não encontrado" });
+      return res.status(404).json({ erro: "Chamado nao encontrado" });
     }
 
     if (
       req.usuario.tipo === "CLIENTE" &&
       chamado.usuario_id !== req.usuario.id
     ) {
-      return res.status(403).json({ erro: "Sem permissão" });
+      return res.status(403).json({ erro: "Sem permissao" });
     }
 
     res.json(chamado);
@@ -133,7 +134,7 @@ export const atualizarChamado = async (req: any, res: Response) => {
     const chamado = await Chamado.findByPk(req.params.id);
 
     if (!chamado) {
-      return res.status(404).json({ erro: "Chamado não encontrado" });
+      return res.status(404).json({ erro: "Chamado nao encontrado" });
     }
 
     const statusPermitidos = [
@@ -141,48 +142,84 @@ export const atualizarChamado = async (req: any, res: Response) => {
       "ATRIBUIDO",
       "EM_ATENDIMENTO",
       "FINALIZADO",
+      "FECHADO",
     ];
 
-    if (req.body.status && !statusPermitidos.includes(req.body.status)) {
-      return res.status(400).json({ erro: "Status inválido" });
+    const nextStatus = req.body.status;
+    const observacaoValidacao = String(req.body.observacao ?? "").trim();
+
+    if (nextStatus && !statusPermitidos.includes(nextStatus)) {
+      return res.status(400).json({ erro: "Status invalido" });
     }
 
-    const reabrindoChamado =
+    const clienteValidandoChamado =
+      req.usuario.tipo === "CLIENTE" &&
+      chamado.usuario_id === req.usuario.id &&
       chamado.status === "FINALIZADO" &&
-      req.usuario.tipo === "ADMIN" &&
-      req.body.status &&
-      req.body.status !== "FINALIZADO";
+      (nextStatus === "EM_ATENDIMENTO" || nextStatus === "FECHADO");
 
-    if (chamado.status === "FINALIZADO" && !reabrindoChamado) {
-      return res.status(400).json({ erro: "Chamado finalizado" });
+    const adminReabrindoChamado =
+      req.usuario.tipo === "ADMIN" &&
+      (chamado.status === "FINALIZADO" || chamado.status === "FECHADO") &&
+      nextStatus &&
+      nextStatus !== "FINALIZADO" &&
+      nextStatus !== "FECHADO";
+
+    if (
+      (chamado.status === "FINALIZADO" || chamado.status === "FECHADO") &&
+      !clienteValidandoChamado &&
+      !adminReabrindoChamado
+    ) {
+      return res.status(400).json({ erro: "Chamado encerrado" });
     }
 
-    if (req.usuario.tipo === "CLIENTE" && req.body.status) {
+    if (req.usuario.tipo === "CLIENTE" && nextStatus && !clienteValidandoChamado) {
       return res.status(403).json({
-        erro: "Cliente não pode alterar status",
+        erro: "Cliente so pode validar chamado finalizado",
       });
     }
 
     if (
-      req.body.status === "FINALIZADO" &&
+      nextStatus === "FINALIZADO" &&
       req.usuario.tipo === "SUPORTE" &&
       chamado.tecnico_id !== req.usuario.id
     ) {
-      return res.status(403).json({ erro: "Sem permissão" });
+      return res.status(403).json({ erro: "Sem permissao" });
+    }
+
+    if (
+      req.usuario.tipo === "SUPORTE" &&
+      nextStatus &&
+      nextStatus !== "FINALIZADO"
+    ) {
+      return res.status(403).json({ erro: "Tecnico so pode finalizar" });
+    }
+
+    if (clienteValidandoChamado && observacaoValidacao.length < 5) {
+      return res.status(400).json({
+        erro: "Informe uma descricao com pelo menos 5 caracteres",
+      });
     }
 
     const statusAnterior = chamado.status;
 
-    await chamado.update(req.body);
+    await chamado.update(nextStatus ? { status: nextStatus } : req.body);
 
-    if (req.body.status && req.body.status !== statusAnterior) {
+    if (nextStatus && nextStatus !== statusAnterior) {
+      const descricaoLog =
+        clienteValidandoChamado && nextStatus === "FECHADO"
+          ? `Cliente aprovou e fechou o chamado: ${observacaoValidacao}`
+          : clienteValidandoChamado && nextStatus === "EM_ATENDIMENTO"
+            ? `Cliente reabriu o chamado: ${observacaoValidacao}`
+            : `Status alterado para ${nextStatus}`;
+
       await registrarLog({
         chamado_id: chamado.id,
         status_anterior: statusAnterior,
-        status_novo: req.body.status,
+        status_novo: nextStatus,
         usuario_id: req.usuario.id,
         acao: "ATUALIZOU",
-        descricao: `Status alterado para ${req.body.status}`,
+        descricao: descricaoLog,
       });
     }
 
@@ -198,7 +235,7 @@ export const deletarChamado = async (req: any, res: Response) => {
     const chamado = await Chamado.findByPk(req.params.id);
 
     if (!chamado) {
-      return res.status(404).json({ erro: "Chamado não encontrado" });
+      return res.status(404).json({ erro: "Chamado nao encontrado" });
     }
 
     await registrarLog({
@@ -212,7 +249,7 @@ export const deletarChamado = async (req: any, res: Response) => {
 
     await chamado.destroy();
 
-    res.json({ mensagem: "Excluído com sucesso" });
+    res.json({ mensagem: "Excluido com sucesso" });
   } catch {
     res.status(500).json({ erro: "Erro ao deletar" });
   }
@@ -225,16 +262,16 @@ export const atribuirChamado = async (req: any, res: Response) => {
     const { tecnico_id } = req.body;
 
     if (!chamado) {
-      return res.status(404).json({ erro: "Chamado não encontrado" });
+      return res.status(404).json({ erro: "Chamado nao encontrado" });
     }
 
     if (!["SUPORTE", "ADMIN"].includes(req.usuario.tipo)) {
-      return res.status(403).json({ erro: "Sem permissão" });
+      return res.status(403).json({ erro: "Sem permissao" });
     }
 
     if (chamado.tecnico_id) {
       return res.status(400).json({
-        erro: "Já possui técnico",
+        erro: "Ja possui tecnico",
       });
     }
 
@@ -251,10 +288,10 @@ export const atribuirChamado = async (req: any, res: Response) => {
       status_novo: "ATRIBUIDO",
       usuario_id: req.usuario.id,
       acao: "ATRIBUIU",
-      descricao: `Atribuído ao técnico ${tecnico_id}`,
+      descricao: `Atribuido ao tecnico ${tecnico_id}`,
     });
 
-    res.json({ mensagem: "Atribuído com sucesso" });
+    res.json({ mensagem: "Atribuido com sucesso" });
   } catch {
     res.status(500).json({ erro: "Erro ao atribuir" });
   }

@@ -30,6 +30,26 @@
   letter-spacing: 0.05em;
 }
 
+.ticket-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.ticket-sort-btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #4f46e5;
+}
+
 .ticket-table tbody {
   border-top: 1px solid #e5e7eb;
 }
@@ -96,6 +116,11 @@
   color: #065f46;
 }
 
+.status-badge.fechado {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
 .ticket-prioridade {
   white-space: nowrap;
 }
@@ -136,6 +161,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .sla-indicator svg {
@@ -151,6 +177,13 @@
   font-size: 0.875rem;
   color: #047857;
   font-weight: 500;
+}
+
+.sla-indicator small {
+  width: 100%;
+  margin-left: 1.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .sla-indicator.proximo svg {
@@ -173,6 +206,16 @@
   font-weight: 500;
 }
 
+.sla-indicator.finalizado svg {
+  color: #10b981;
+}
+
+.sla-indicator.finalizado span {
+  font-size: 0.875rem;
+  color: #047857;
+  font-weight: 500;
+}
+
 .ticket-data {
   white-space: nowrap;
   font-size: 0.875rem;
@@ -183,4 +226,52 @@
   white-space: nowrap;
   font-size: 0.875rem;
   color: #111827;
+}
+
+.no-tickets-row {
+  text-align: center;
+  color: #6b7280;
+}
+
+.ticket-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.ticket-pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ticket-pagination-pages button {
+  min-width: 2rem;
+  height: 2rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ticket-pagination-pages button.active,
+.ticket-pagination-pages button:hover {
+  border-color: #04157a;
+  background: #04157a;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .ticket-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

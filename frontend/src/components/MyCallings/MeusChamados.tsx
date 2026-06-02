@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar } from "lucide-react";
+import { AlertCircle, Calendar, Tag, UserRound } from "lucide-react";
 import {
   listTickets,
   assignTicket,
@@ -11,7 +11,12 @@ import { Usuario } from "../../services/user";
 import { useToast } from "../../components/Toast/ToastContext";
 import "./meus-chamados.css";
 
-type FilterStatus = "todos" | "Abertos" | "Em Atendimento" | "Finalizado";
+type FilterStatus =
+  | "todos"
+  | "Abertos"
+  | "Em Atendimento"
+  | "Finalizado"
+  | "Fechado";
 
 interface MeusChamadosProps {
   user: AuthUser | null;
@@ -19,6 +24,53 @@ interface MeusChamadosProps {
   openTicketsFocusKey?: number;
   onTicketChanged?: () => void;
 }
+
+function normalizeClass(value?: string) {
+  return value
+    ? value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/_+/g, "-")
+    : "";
+}
+
+function formatDate(value?: string) {
+  if (!value) return "N/D";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("pt-BR");
+}
+
+function getOpeningDate(ticket: Chamado) {
+  if (ticket.data_abertura || ticket.created_at) {
+    return ticket.data_abertura ?? ticket.created_at;
+  }
+
+  if (ticket.prazo_resolucao && ticket.categoria?.sla_resolucao) {
+    const abertura = new Date(ticket.prazo_resolucao);
+    abertura.setHours(abertura.getHours() - ticket.categoria.sla_resolucao);
+    return abertura.toISOString();
+  }
+
+  return undefined;
+}
+
+const statusLabelMap: Record<string, string> = {
+  NOVO: "NOVO",
+  ATRIBUIDO: "ATRIBUIDO",
+  EM_ATENDIMENTO: "EM ATENDIMENTO",
+  FINALIZADO: "FINALIZADO",
+  FECHADO: "FECHADO",
+};
+
+const prioridadeLabelMap: Record<string, string> = {
+  BAIXA: "BAIXA",
+  MEDIA: "MEDIA",
+  ALTA: "ALTA",
+  URGENTE: "URGENTE",
+};
 
 export function MeusChamados({
   user,
@@ -133,6 +185,9 @@ export function MeusChamados({
     if (filterStatus === "Finalizado") {
       return ticket.status === "FINALIZADO";
     }
+    if (filterStatus === "Fechado") {
+      return ticket.status === "FECHADO";
+    }
     return true;
   });
 
@@ -146,12 +201,15 @@ export function MeusChamados({
   const totalFinalizados = tickets.filter(
     (ticket) => ticket.status === "FINALIZADO",
   ).length;
+  const totalFechados = tickets.filter(
+    (ticket) => ticket.status === "FECHADO",
+  ).length;
 
   return (
     <div className="meus-chamados-container">
       <div className="meus-chamados-header">
         <div>
-          <h1>Meus Chamados</h1>
+          <h1>Chamados</h1>
           <p>Acompanhe o status dos seus chamados</p>
         </div>
       </div>
@@ -189,6 +247,13 @@ export function MeusChamados({
           <span>Finalizados</span>
           <span className="filter-count">{totalFinalizados}</span>
         </button>
+        <button
+          className={`filter-tab ${filterStatus === "Fechado" ? "active" : ""}`}
+          onClick={() => setFilterStatus("Fechado")}
+        >
+          <span>Fechados</span>
+          <span className="filter-count">{totalFechados}</span>
+        </button>
       </div>
 
       <div className="meus-chamados-list">
@@ -198,26 +263,58 @@ export function MeusChamados({
           filteredTickets.map((ticket) => (
             <div key={ticket.id} className="meus-chamados-card">
               <div className="chamado-card-header">
-                <h3>{ticket.titulo}</h3>
-                <span
-                  className={`status-badge ${ticket.status
-                    .toLowerCase()
-                    .replace(/\s/g, "-")
-                    .replace(/_/g, "-")}`}
-                >
-                  {ticket.status}
-                </span>
+                <div className="chamado-title-area">
+                  <span className="chamado-id">Chamado #{ticket.id}</span>
+                  <h3>{ticket.titulo}</h3>
+                </div>
+                <div className="chamado-badges">
+                  <span className={`status-badge ${normalizeClass(ticket.status)}`}>
+                    {statusLabelMap[ticket.status] ?? ticket.status}
+                  </span>
+                  <span
+                    className={`prioridade-badge ${normalizeClass(ticket.prioridade)}`}
+                  >
+                    {prioridadeLabelMap[ticket.prioridade] ?? ticket.prioridade}
+                  </span>
+                </div>
               </div>
-              <p>{ticket.descricao}</p>
-              <div className="chamado-card-meta">
-                <span>{ticket.categoria?.nome ?? "Categoria"}</span>
-                <span>{ticket.prioridade ?? "Prioridade"}</span>
-                <span>
-                  <Calendar className="icon-small" />{" "}
-                  {ticket.prazo_atendimento
-                    ? new Date(ticket.prazo_atendimento).toLocaleDateString()
-                    : "N/D"}
-                </span>
+
+              <div className="chamado-card-body">
+                <div className="chamado-description-block">
+                  <label>Descricao</label>
+                  <p>{ticket.descricao}</p>
+                </div>
+
+                <div className="chamado-info-grid">
+                  <div className="chamado-info-item">
+                    <label>Categoria</label>
+                    <span>
+                      <Tag className="icon-small" />
+                      {ticket.categoria?.nome ?? "Categoria"}
+                    </span>
+                  </div>
+                  <div className="chamado-info-item">
+                    <label>Data de abertura</label>
+                    <span>
+                      <Calendar className="icon-small" />
+                      {formatDate(getOpeningDate(ticket))}
+                    </span>
+                  </div>
+                  <div className="chamado-info-item">
+                    <label>SLA de solucao</label>
+                    <span>
+                      <AlertCircle className="icon-small" />
+                      {formatDate(ticket.prazo_resolucao)}
+                    </span>
+                  </div>
+                  <div className="chamado-info-item">
+                    <label>Tecnico</label>
+                    <span>
+                      <UserRound className="icon-small" />
+                      {ticket.tecnico?.nome ?? "Nao atribuido"}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {user?.tipo === "SUPORTE" &&

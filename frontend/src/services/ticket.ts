@@ -8,13 +8,25 @@ export interface Chamado {
   categoria?: {
     id: number;
     nome: string;
+    sla_atendimento?: number;
+    sla_resolucao?: number;
   };
   prioridade: string;
   status: string;
   usuario_id: number;
   tecnico_id: number | null;
+  data_abertura?: string;
+  created_at?: string;
   prazo_atendimento: string;
   prazo_resolucao: string;
+  usuario?: {
+    id?: number;
+    nome: string;
+  };
+  tecnico?: {
+    id?: number;
+    nome: string;
+  } | null;
 }
 
 export interface Paginated<T> {
@@ -60,9 +72,13 @@ export async function finalizeTicket(chamadoId: number) {
   });
 }
 
-export async function updateTicketStatus(chamadoId: number, status: string) {
+export async function updateTicketStatus(
+  chamadoId: number,
+  status: string,
+  observacao?: string,
+) {
   return apiRequest<Chamado>(`/chamados/${chamadoId}`, {
     method: "PUT",
-    body: { status },
+    body: { status, observacao },
   });
 }

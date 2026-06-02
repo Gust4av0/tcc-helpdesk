@@ -12,7 +12,7 @@ interface Tecnico {
 interface ChamadoAtribuivel {
   id: number | string;
   titulo: string;
-  categoria?: string | { id: number; nome: string };
+  categoria?: string | { id?: number; nome: string };
   prioridade?: string;
   dataAbertura?: string;
   cliente?: string;

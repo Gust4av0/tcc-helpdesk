@@ -32,6 +32,10 @@ ChamadoMensagem.init(
       type: DataTypes.TEXT("long"),
       allowNull: true,
     },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,

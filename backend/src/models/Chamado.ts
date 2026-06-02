@@ -20,7 +20,13 @@ const Chamado = sequelize.define(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("NOVO", "ATRIBUIDO", "EM_ATENDIMENTO", "FINALIZADO"),
+      type: DataTypes.ENUM(
+        "NOVO",
+        "ATRIBUIDO",
+        "EM_ATENDIMENTO",
+        "FINALIZADO",
+        "FECHADO",
+      ),
       defaultValue: "NOVO",
     },
     usuario_id: {
@@ -37,6 +43,10 @@ const Chamado = sequelize.define(
     prioridade: {
       type: DataTypes.ENUM("BAIXA", "MEDIA", "ALTA", "URGENTE"),
       defaultValue: "MEDIA",
+    },
+    data_abertura: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
     prazo_atendimento: {
       type: DataTypes.DATE,

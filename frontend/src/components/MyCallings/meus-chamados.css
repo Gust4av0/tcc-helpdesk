@@ -84,6 +84,16 @@
   gap: 1.25rem;
 }
 
+.meus-chamados-empty {
+  padding: 3rem 2rem;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  font-weight: 600;
+}
+
 
 .empty-state {
   display: flex;
@@ -118,16 +128,18 @@
 }
 
 
-.chamado-card {
+.chamado-card,
+.meus-chamados-card {
   background-color: white;
   border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   overflow: hidden;
   transition: all 0.2s;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.chamado-card:hover {
+.chamado-card:hover,
+.meus-chamados-card:hover {
   border-color: #04157a;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -136,6 +148,21 @@
 .chamado-card-header {
   padding: 1.5rem;
   border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chamado-title-area {
+  min-width: 0;
+}
+
+.chamado-title-area h3 {
+  margin: 0.35rem 0 0;
+  color: #111827;
+  font-size: 1.125rem;
+  line-height: 1.35;
 }
 
 .chamado-card-title-row {
@@ -155,6 +182,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .status-badge {
@@ -244,6 +273,11 @@
   color: #065f46;
 }
 
+.status-badge.fechado {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
 .prioridade-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
@@ -292,10 +326,34 @@
   background-color: #f9fafb;
 }
 
+.chamado-description-block {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chamado-description-block label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.chamado-description-block p {
+  margin: 0;
+  color: #111827;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .chamado-info-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .chamado-info-item {
@@ -313,9 +371,14 @@
 }
 
 .chamado-info-item span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.9375rem;
   color: #111827;
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .chamado-tecnico {
@@ -380,11 +443,12 @@
   }
 
   .chamado-info-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
 
-  .chamado-card-title-row {
+  .chamado-card-title-row,
+  .chamado-card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
@@ -405,5 +469,9 @@
 
   .filter-tab {
     flex-shrink: 0;
+  }
+
+  .chamado-info-grid {
+    grid-template-columns: 1fr;
   }
 }

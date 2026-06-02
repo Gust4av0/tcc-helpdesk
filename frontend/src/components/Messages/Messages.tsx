@@ -25,6 +25,21 @@ interface MessagesProps {
   user: AuthUser | null;
 }
 
+function formatDateTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) {
+    return "";
+  }
+  return date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function Messages({ isOpen, onClose, user }: MessagesProps) {
   const [tickets, setTickets] = useState<Chamado[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Chamado | null>(null);
@@ -47,9 +62,10 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
         if (!user) return true;
         if (user.tipo === "SUPORTE") {
           return (
-            ticket.status === "NOVO" ||
-            ticket.tecnico_id === user.id ||
-            ticket.status === "FINALIZADO" && ticket.tecnico_id === user.id
+            ticket.tecnico_id === user.id &&
+            ["ATRIBUIDO", "EM_ATENDIMENTO", "FINALIZADO", "FECHADO"].includes(
+              ticket.status,
+            )
           );
         }
 
@@ -91,8 +107,17 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
+  };
+
+  const handleClose = () => {
+    setSelectedTicket(null);
+    setMessages([]);
+    setNewMessage("");
+    setSelectedAttachment(null);
+    setImagePreview(null);
+    onClose();
   };
 
   const handleTicketClick = (ticket: Chamado) => {
@@ -104,7 +129,9 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
     setMessages([]);
   };
 
-  const isTicketFinalized = selectedTicket?.status === "FINALIZADO";
+  const isTicketFinalized =
+    selectedTicket?.status === "FINALIZADO" ||
+    selectedTicket?.status === "FECHADO";
 
   const handleSend = async () => {
     if (!selectedTicket || (!newMessage.trim() && !selectedAttachment) || isTicketFinalized) return;
@@ -165,7 +192,7 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
           <button
             type="button"
             className="messages-close-btn"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Fechar mensagens"
           >
             <X />
@@ -192,33 +219,43 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                 </button>
               </div>
               <div className="ticket-list">
-              {tickets
-                .filter((ticket) =>
+                {tickets
+                  .filter((ticket) =>
+                    showFinalizedTickets
+                      ? ticket.status === "FINALIZADO" || ticket.status === "FECHADO"
+                      : ["ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
+                  )
+                  .map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className="ticket-list-item"
+                      onClick={() => handleTicketClick(ticket)}
+                    >
+                      <div className="ticket-list-item-state">
+                        <span className={`ticket-status-badge ${ticket.status.toLowerCase().replace(/_/g, "-")}`}>
+                          {ticket.status}
+                        </span>
+                      </div>
+                      <div className="ticket-list-item-info">
+                        <span className="ticket-list-item-id">#{ticket.id}</span>
+                        <span className="ticket-list-item-tech">
+                          {ticket.categoria?.nome ?? "Sem categoria"}
+                        </span>
+                      </div>
+                      <MessageSquare className="ticket-list-item-icon" />
+                    </div>
+                  ))}
+
+                {tickets.filter((ticket) =>
                   showFinalizedTickets
-                    ? ticket.status === "FINALIZADO"
-                    : ["NOVO", "ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
-                )
-                .map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="ticket-list-item"
-                  onClick={() => handleTicketClick(ticket)}
-                >
-                  <div className="ticket-list-item-state">
-                    <span className={`ticket-status-badge ${ticket.status.toLowerCase().replace(/_/g, "-")}`}>
-                      {ticket.status}
-                    </span>
+                    ? ticket.status === "FINALIZADO" || ticket.status === "FECHADO"
+                    : ["ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
+                ).length === 0 && (
+                  <div className="messages-empty-state">
+                    Nenhum chamado atribuido para conversa.
                   </div>
-                  <div className="ticket-list-item-info">
-                    <span className="ticket-list-item-id">#{ticket.id}</span>
-                    <span className="ticket-list-item-tech">
-                      {ticket.categoria?.nome ?? "Sem categoria"}
-                    </span>
-                  </div>
-                  <MessageSquare className="ticket-list-item-icon" />
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
           </>
           ) : (
             <div className="chat-container">
@@ -299,9 +336,11 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                           )}
                         </div>
                       )}
-                      <div className="chat-message-time">
-                        {new Date(message.created_at).toLocaleString()}
-                      </div>
+                      {formatDateTime(message.created_at) && (
+                        <div className="chat-message-time">
+                          {formatDateTime(message.created_at)}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -309,7 +348,7 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
 
               {isTicketFinalized && (
                 <div className="chat-finalized-notice">
-                  Chamado finalizado. Não é possível enviar novas mensagens.
+                  Chamado encerrado. Não é possível enviar novas mensagens.
                 </div>
               )}
 

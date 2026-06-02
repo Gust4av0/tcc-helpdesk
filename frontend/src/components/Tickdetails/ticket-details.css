@@ -231,6 +231,11 @@
   color: #065f46;
 }
 
+.status-badge.fechado {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
 .prioridade-badge {
   padding: 0.375rem 0.875rem;
   border-radius: 9999px;
@@ -444,6 +449,39 @@
   border-top: 1px solid #e5e7eb;
   background-color: #ffffff;
   border-radius: 0 0 1rem 1rem;
+}
+
+.ticket-client-validation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.ticket-client-validation label {
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.ticket-client-validation textarea {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.85rem 1rem;
+  color: #0f172a;
+  font: inherit;
+  resize: vertical;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  outline: none;
+}
+
+.ticket-client-validation textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .btn-secondary {
