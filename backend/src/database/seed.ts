@@ -8,7 +8,7 @@ export const seed = async () => {
   await Usuario.findOrCreate({
     where: { email: "admin@helpdesk.com" },
     defaults: {
-      nome: "Admin",
+      nome: "Administrador",
       email: "admin@helpdesk.com",
       senha,
       tipo: "ADMIN",
@@ -18,7 +18,7 @@ export const seed = async () => {
   await Usuario.findOrCreate({
     where: { email: "tecnico@helpdesk.com" },
     defaults: {
-      nome: "Tecnico",
+      nome: "Tecnico Gustavo",
       email: "tecnico@helpdesk.com",
       senha,
       tipo: "SUPORTE",
@@ -28,7 +28,7 @@ export const seed = async () => {
   await Usuario.findOrCreate({
     where: { email: "cliente@helpdesk.com" },
     defaults: {
-      nome: "Cliente",
+      nome: "Cliente João",
       email: "cliente@helpdesk.com",
       senha,
       tipo: "CLIENTE",
