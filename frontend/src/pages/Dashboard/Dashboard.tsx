@@ -83,8 +83,10 @@ export default function Dashboard({
     null,
   );
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [newTickets, setNewTickets] = useState<Ticket[]>([]);
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [users, setUsers] = useState<Usuario[]>([]);
+  const [openTicketsFocusKey, setOpenTicketsFocusKey] = useState(0);
   const hasCategories = categories.length > 0;
 
   const handleMenuClick = (item: string) => {
@@ -108,7 +110,10 @@ export default function Dashboard({
   const computedDashboardData = useMemo(() => {
     if (user?.tipo === "ADMIN") return dashboardData;
 
-    const statusCounts = tickets.reduce(
+    const statusSource =
+      user?.tipo === "SUPORTE" ? [...newTickets, ...tickets] : tickets;
+
+    const statusCounts = statusSource.reduce(
       (acc, ticket) => {
         const status = ticket.status ?? "NOVO";
         acc[status] = (acc[status] ?? 0) + 1;
@@ -131,7 +136,7 @@ export default function Dashboard({
         FINALIZADO: statusCounts.FINALIZADO,
       },
     } as DashboardData;
-  }, [dashboardData, tickets, user]);
+  }, [dashboardData, newTickets, tickets, user]);
 
   const filteredTickets = useMemo(() => {
     const now = new Date();
@@ -227,8 +232,17 @@ export default function Dashboard({
 
   const loadTickets = async () => {
     try {
-      const result = await listTickets();
+      const result = await listTickets(1, 100);
       const fetchedTickets = result.data;
+      const unassignedNewTickets = fetchedTickets.filter(
+        (ticket) => ticket.status === "NOVO" && !ticket.tecnico_id,
+      );
+
+      if (user?.tipo === "ADMIN" || user?.tipo === "SUPORTE") {
+        setNewTickets(unassignedNewTickets);
+      } else {
+        setNewTickets([]);
+      }
 
       if (user?.tipo === "SUPORTE") {
         setTickets(
@@ -279,6 +293,19 @@ export default function Dashboard({
     loadUsers();
   }, [user]);
 
+  useEffect(() => {
+    if (user?.tipo !== "ADMIN" && user?.tipo !== "SUPORTE") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      loadDashboardData();
+      loadTickets();
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [user]);
+
   const handleTicketClick = (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setIsTicketDetailsOpen(true);
@@ -288,6 +315,16 @@ export default function Dashboard({
     setSelectedTecnico(tecnico);
     setIsTecnicosOpen(false);
     setIsAtribuirOpen(true);
+  };
+
+  const handleOpenNewTickets = () => {
+    setActiveMenuItem("meus-chamados");
+    setOpenTicketsFocusKey((current) => current + 1);
+  };
+
+  const refreshTicketsAndMetrics = () => {
+    loadTickets();
+    loadDashboardData();
   };
 
   const handleOpenTicket = async (data: {
@@ -466,6 +503,8 @@ export default function Dashboard({
           user={user}
           onLogout={onLogout}
           onOpenProfile={() => setIsProfileOpen(true)}
+          newTicketsCount={newTickets.length}
+          onOpenNewTickets={handleOpenNewTickets}
         />
 
         <main className="app-main-content">
@@ -548,7 +587,14 @@ export default function Dashboard({
               </>
             )}
 
-            {activeMenuItem === "meus-chamados" && <MeusChamados user={user} />}
+            {activeMenuItem === "meus-chamados" && (
+              <MeusChamados
+                user={user}
+                tecnicos={users.filter((usuario) => usuario.tipo === "SUPORTE")}
+                openTicketsFocusKey={openTicketsFocusKey}
+                onTicketChanged={refreshTicketsAndMetrics}
+              />
+            )}
           </div>
         </main>
       </div>
@@ -618,7 +664,7 @@ export default function Dashboard({
           setSelectedTecnico(null);
         }}
         tecnico={selectedTecnico}
-        chamados={tickets.filter((ticket) => !ticket.tecnico_id)}
+        chamados={newTickets}
         onAssign={handleAssignTicket}
       />
     </div>

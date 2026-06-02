@@ -4,7 +4,7 @@
   height: 4rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 1.5rem;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(10px);
@@ -55,36 +55,62 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-left: auto;
 }
 
 .topbar-notification-btn {
   position: relative;
-  padding: 0.5rem;
-  color: #4b5563;
-  background-color: transparent;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  color: #334155;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   border-radius: 0.5rem;
-  transition: background-color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .topbar-notification-btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .topbar-notification-btn:hover {
-  background-color: #f3f4f6;
+  color: #1d4ed8;
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.topbar-notification-btn.has-notifications {
+  color: #1d4ed8;
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .topbar-notification-badge {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  background-color: #ef4444;
+  top: -0.45rem;
+  right: -0.45rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dc2626;
+  color: #ffffff;
+  border: 2px solid #ffffff;
   border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 

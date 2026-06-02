@@ -1,25 +1,42 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
-import { listTickets, assignTicket, finalizeTicket, Chamado } from "../../services/ticket";
+import {
+  listTickets,
+  assignTicket,
+  finalizeTicket,
+  Chamado,
+} from "../../services/ticket";
 import { AuthUser } from "../../services/auth";
+import { Usuario } from "../../services/user";
 import { useToast } from "../../components/Toast/ToastContext";
 import "./meus-chamados.css";
 
+type FilterStatus = "todos" | "Abertos" | "Em Atendimento" | "Finalizado";
+
 interface MeusChamadosProps {
   user: AuthUser | null;
+  tecnicos?: Usuario[];
+  openTicketsFocusKey?: number;
+  onTicketChanged?: () => void;
 }
 
-export function MeusChamados({ user }: MeusChamadosProps) {
+export function MeusChamados({
+  user,
+  tecnicos = [],
+  openTicketsFocusKey = 0,
+  onTicketChanged,
+}: MeusChamadosProps) {
   const [tickets, setTickets] = useState<Chamado[]>([]);
-  const [filterStatus, setFilterStatus] = useState<
-    "todos" | "Abertos" | "Em Atendimento" | "Finalizado"
-  >("todos");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
+  const [selectedTechnicians, setSelectedTechnicians] = useState<
+    Record<number, string>
+  >({});
 
   const { addToast } = useToast();
 
   const loadTickets = async () => {
     try {
-      const result = await listTickets();
+      const result = await listTickets(1, 100);
       const allTickets = result.data;
 
       if (!user) {
@@ -33,10 +50,7 @@ export function MeusChamados({ user }: MeusChamadosProps) {
         }
 
         if (user.tipo === "SUPORTE") {
-          return (
-            ticket.status === "NOVO" ||
-            ticket.tecnico_id === user.id
-          );
+          return ticket.status === "NOVO" || ticket.tecnico_id === user.id;
         }
 
         return true;
@@ -52,11 +66,46 @@ export function MeusChamados({ user }: MeusChamadosProps) {
     loadTickets();
   }, [user]);
 
+  useEffect(() => {
+    if (openTicketsFocusKey > 0) {
+      setFilterStatus("Abertos");
+    }
+  }, [openTicketsFocusKey]);
+
   const handleAssignToMe = async (ticketId: number) => {
     try {
       await assignTicket(ticketId, user!.id);
       addToast("success", "Chamado atribuído a você com sucesso");
       loadTickets();
+      onTicketChanged?.();
+    } catch (error: any) {
+      addToast("error", error?.message || "Erro ao atribuir chamado");
+    }
+  };
+
+  const handleAssignToTechnician = async (ticketId: number) => {
+    const tecnicoId = Number(selectedTechnicians[ticketId]);
+
+    if (!tecnicoId) {
+      addToast("warning", "Selecione um técnico para atribuir o chamado");
+      return;
+    }
+
+    const tecnico = tecnicos.find((item) => item.id === tecnicoId);
+
+    try {
+      await assignTicket(ticketId, tecnicoId);
+      addToast(
+        "success",
+        `Chamado atribuído a ${tecnico?.nome ?? "técnico"} com sucesso`,
+      );
+      setSelectedTechnicians((current) => {
+        const next = { ...current };
+        delete next[ticketId];
+        return next;
+      });
+      loadTickets();
+      onTicketChanged?.();
     } catch (error: any) {
       addToast("error", error?.message || "Erro ao atribuir chamado");
     }
@@ -67,6 +116,7 @@ export function MeusChamados({ user }: MeusChamadosProps) {
       await finalizeTicket(ticketId);
       addToast("success", "Chamado finalizado com sucesso");
       loadTickets();
+      onTicketChanged?.();
     } catch (error: any) {
       addToast("error", error?.message || "Erro ao finalizar chamado");
     }
@@ -78,10 +128,7 @@ export function MeusChamados({ user }: MeusChamadosProps) {
       return ticket.status === "NOVO";
     }
     if (filterStatus === "Em Atendimento") {
-      return (
-        ticket.status === "ATRIBUIDO" ||
-        ticket.status === "EM_ATENDIMENTO"
-      );
+      return ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO";
     }
     if (filterStatus === "Finalizado") {
       return ticket.status === "FINALIZADO";
@@ -125,14 +172,18 @@ export function MeusChamados({ user }: MeusChamadosProps) {
           <span className="filter-count">{totalAbertos}</span>
         </button>
         <button
-          className={`filter-tab ${filterStatus === "Em Atendimento" ? "active" : ""}`}
+          className={`filter-tab ${
+            filterStatus === "Em Atendimento" ? "active" : ""
+          }`}
           onClick={() => setFilterStatus("Em Atendimento")}
         >
           <span>Em Atendimento</span>
           <span className="filter-count">{totalEmAtendimento}</span>
         </button>
         <button
-          className={`filter-tab ${filterStatus === "Finalizado" ? "active" : ""}`}
+          className={`filter-tab ${
+            filterStatus === "Finalizado" ? "active" : ""
+          }`}
           onClick={() => setFilterStatus("Finalizado")}
         >
           <span>Finalizados</span>
@@ -169,20 +220,56 @@ export function MeusChamados({ user }: MeusChamadosProps) {
                 </span>
               </div>
 
-              {user?.tipo === "SUPORTE" && ticket.status === "NOVO" && !ticket.tecnico_id && (
-                <div className="chamado-card-actions">
-                  <button
-                    type="button"
-                    className="atribuir-mim-btn"
-                    onClick={() => handleAssignToMe(Number(ticket.id))}
-                  >
-                    Atribuir a mim
-                  </button>
-                </div>
-              )}
+              {user?.tipo === "SUPORTE" &&
+                ticket.status === "NOVO" &&
+                !ticket.tecnico_id && (
+                  <div className="chamado-card-actions">
+                    <button
+                      type="button"
+                      className="atribuir-mim-btn"
+                      onClick={() => handleAssignToMe(Number(ticket.id))}
+                    >
+                      Atribuir a mim
+                    </button>
+                  </div>
+                )}
+
+              {user?.tipo === "ADMIN" &&
+                ticket.status === "NOVO" &&
+                !ticket.tecnico_id && (
+                  <div className="chamado-card-actions admin-assign-actions">
+                    <select
+                      className="admin-assign-select"
+                      value={selectedTechnicians[ticket.id] ?? ""}
+                      onChange={(event) =>
+                        setSelectedTechnicians((current) => ({
+                          ...current,
+                          [ticket.id]: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Selecionar técnico</option>
+                      {tecnicos.map((tecnico) => (
+                        <option key={tecnico.id} value={tecnico.id}>
+                          {tecnico.nome}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="atribuir-mim-btn"
+                      onClick={() =>
+                        handleAssignToTechnician(Number(ticket.id))
+                      }
+                    >
+                      Atribuir técnico
+                    </button>
+                  </div>
+                )}
 
               {(user?.tipo === "SUPORTE" || user?.tipo === "ADMIN") &&
-                (ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO") &&
+                (ticket.status === "ATRIBUIDO" ||
+                  ticket.status === "EM_ATENDIMENTO") &&
                 (user.tipo === "ADMIN" || ticket.tecnico_id === user.id) && (
                   <div className="chamado-card-actions">
                     <button
