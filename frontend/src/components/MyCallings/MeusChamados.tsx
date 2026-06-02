@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, Calendar, Tag, UserRound } from "lucide-react";
+import { AlertCircle, Calendar, Search, Tag, UserRound, Zap } from "lucide-react";
 import {
   listTickets,
   assignTicket,
@@ -22,6 +22,7 @@ interface MeusChamadosProps {
   user: AuthUser | null;
   tecnicos?: Usuario[];
   openTicketsFocusKey?: number;
+  onTicketClick?: (ticket: Chamado) => void;
   onTicketChanged?: () => void;
 }
 
@@ -43,6 +44,34 @@ function formatDate(value?: string) {
   return date.toLocaleDateString("pt-BR");
 }
 
+function formatDeadlineDistance(value?: string) {
+  if (!value) return "SLA não definido";
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return "SLA inválido";
+
+  const diffMs = deadline.getTime() - Date.now();
+  const absHours = Math.max(1, Math.ceil(Math.abs(diffMs) / 3600000));
+  const days = Math.floor(absHours / 24);
+  const hours = absHours % 24;
+  const time =
+    days > 0
+      ? `${days}d${hours > 0 ? ` ${hours}h` : ""}`
+      : `${absHours}h`;
+
+  return diffMs < 0 ? `Atrasado há ${time}` : `Vence em ${time}`;
+}
+
+function getSlaClass(value?: string, status?: string) {
+  if (["FINALIZADO", "FECHADO"].includes(status ?? "")) return "ok";
+  if (!value) return "";
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return "";
+  const hoursRemaining = (deadline.getTime() - Date.now()) / 3600000;
+  if (hoursRemaining < 0) return "danger";
+  if (hoursRemaining <= 24) return "warning";
+  return "ok";
+}
+
 function getOpeningDate(ticket: Chamado) {
   if (ticket.data_abertura || ticket.created_at) {
     return ticket.data_abertura ?? ticket.created_at;
@@ -59,7 +88,7 @@ function getOpeningDate(ticket: Chamado) {
 
 const statusLabelMap: Record<string, string> = {
   NOVO: "NOVO",
-  ATRIBUIDO: "ATRIBUIDO",
+  ATRIBUIDO: "ATRIBUÍDO",
   EM_ATENDIMENTO: "EM ATENDIMENTO",
   FINALIZADO: "FINALIZADO",
   FECHADO: "FECHADO",
@@ -67,19 +96,28 @@ const statusLabelMap: Record<string, string> = {
 
 const prioridadeLabelMap: Record<string, string> = {
   BAIXA: "BAIXA",
-  MEDIA: "MEDIA",
+  MEDIA: "MÉDIA",
   ALTA: "ALTA",
   URGENTE: "URGENTE",
+};
+
+const priorityRank: Record<string, number> = {
+  URGENTE: 0,
+  ALTA: 1,
+  MEDIA: 2,
+  BAIXA: 3,
 };
 
 export function MeusChamados({
   user,
   tecnicos = [],
   openTicketsFocusKey = 0,
+  onTicketClick,
   onTicketChanged,
 }: MeusChamadosProps) {
   const [tickets, setTickets] = useState<Chamado[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedTechnicians, setSelectedTechnicians] = useState<
     Record<number, string>
   >({});
@@ -135,6 +173,28 @@ export function MeusChamados({
     }
   };
 
+  const handleAssignNextTicket = async () => {
+    const nextTicket = tickets
+      .filter((ticket) => ticket.status === "NOVO" && !ticket.tecnico_id)
+      .sort((a, b) => {
+        const priorityA = priorityRank[a.prioridade] ?? 99;
+        const priorityB = priorityRank[b.prioridade] ?? 99;
+        if (priorityA !== priorityB) return priorityA - priorityB;
+
+        return (
+          new Date(a.prazo_resolucao).getTime() -
+          new Date(b.prazo_resolucao).getTime()
+        );
+      })[0];
+
+    if (!nextTicket) {
+      addToast("warning", "Não há chamados novos disponíveis para assumir.");
+      return;
+    }
+
+    await handleAssignToMe(Number(nextTicket.id));
+  };
+
   const handleAssignToTechnician = async (ticketId: number) => {
     const tecnicoId = Number(selectedTechnicians[ticketId]);
 
@@ -174,26 +234,48 @@ export function MeusChamados({
     }
   };
 
-  const filteredTickets = tickets.filter((ticket) => {
-    if (filterStatus === "todos") return true;
-    if (filterStatus === "Abertos") {
-      return ticket.status === "NOVO";
-    }
-    if (filterStatus === "Em Atendimento") {
-      return ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO";
-    }
-    if (filterStatus === "Finalizado") {
-      return ticket.status === "FINALIZADO";
-    }
-    if (filterStatus === "Fechado") {
-      return ticket.status === "FECHADO";
-    }
-    return true;
-  });
+  const filteredTickets = tickets
+    .filter((ticket) => {
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+      const searchable = [
+        ticket.id,
+        ticket.titulo,
+        ticket.descricao,
+        ticket.categoria?.nome,
+        ticket.usuario?.nome,
+        ticket.tecnico?.nome,
+        ticket.status,
+        ticket.prioridade,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-  const totalAbertos = tickets.filter(
-    (ticket) => ticket.status === "NOVO",
-  ).length;
+      if (normalizedSearch && !searchable.includes(normalizedSearch)) {
+        return false;
+      }
+
+      if (filterStatus === "todos") return true;
+      if (filterStatus === "Abertos") return ticket.status === "NOVO";
+      if (filterStatus === "Em Atendimento") {
+        return ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO";
+      }
+      if (filterStatus === "Finalizado") return ticket.status === "FINALIZADO";
+      if (filterStatus === "Fechado") return ticket.status === "FECHADO";
+      return true;
+    })
+    .sort((a, b) => {
+      const priorityA = priorityRank[a.prioridade] ?? 99;
+      const priorityB = priorityRank[b.prioridade] ?? 99;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+
+      return (
+        new Date(a.prazo_resolucao).getTime() -
+        new Date(b.prazo_resolucao).getTime()
+      );
+    });
+
+  const totalAbertos = tickets.filter((ticket) => ticket.status === "NOVO").length;
   const totalEmAtendimento = tickets.filter(
     (ticket) =>
       ticket.status === "ATRIBUIDO" || ticket.status === "EM_ATENDIMENTO",
@@ -201,9 +283,7 @@ export function MeusChamados({
   const totalFinalizados = tickets.filter(
     (ticket) => ticket.status === "FINALIZADO",
   ).length;
-  const totalFechados = tickets.filter(
-    (ticket) => ticket.status === "FECHADO",
-  ).length;
+  const totalFechados = tickets.filter((ticket) => ticket.status === "FECHADO").length;
 
   return (
     <div className="meus-chamados-container">
@@ -212,56 +292,74 @@ export function MeusChamados({
           <h1>Chamados</h1>
           <p>Acompanhe o status dos seus chamados</p>
         </div>
+        {user?.tipo === "SUPORTE" && (
+          <button
+            type="button"
+            className="assumir-proximo-btn"
+            onClick={handleAssignNextTicket}
+          >
+            <Zap />
+            Assumir próximo chamado
+          </button>
+        )}
+      </div>
+
+      <div className="meus-chamados-toolbar">
+        <div className="meus-chamados-search">
+          <Search />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar por ID, título, categoria ou responsável"
+            aria-label="Buscar chamados"
+          />
+        </div>
+        <span>{filteredTickets.length} chamado(s) na lista</span>
       </div>
 
       <div className="meus-chamados-filters">
-        <button
-          className={`filter-tab ${filterStatus === "todos" ? "active" : ""}`}
-          onClick={() => setFilterStatus("todos")}
-        >
-          <span>Todos</span>
-          <span className="filter-count">{tickets.length}</span>
-        </button>
-        <button
-          className={`filter-tab ${filterStatus === "Abertos" ? "active" : ""}`}
-          onClick={() => setFilterStatus("Abertos")}
-        >
-          <span>Abertos</span>
-          <span className="filter-count">{totalAbertos}</span>
-        </button>
-        <button
-          className={`filter-tab ${
-            filterStatus === "Em Atendimento" ? "active" : ""
-          }`}
-          onClick={() => setFilterStatus("Em Atendimento")}
-        >
-          <span>Em Atendimento</span>
-          <span className="filter-count">{totalEmAtendimento}</span>
-        </button>
-        <button
-          className={`filter-tab ${
-            filterStatus === "Finalizado" ? "active" : ""
-          }`}
-          onClick={() => setFilterStatus("Finalizado")}
-        >
-          <span>Finalizados</span>
-          <span className="filter-count">{totalFinalizados}</span>
-        </button>
-        <button
-          className={`filter-tab ${filterStatus === "Fechado" ? "active" : ""}`}
-          onClick={() => setFilterStatus("Fechado")}
-        >
-          <span>Fechados</span>
-          <span className="filter-count">{totalFechados}</span>
-        </button>
+        {[
+          ["todos", "Todos", tickets.length],
+          ["Abertos", "Abertos", totalAbertos],
+          ["Em Atendimento", "Em Atendimento", totalEmAtendimento],
+          ["Finalizado", "Finalizados", totalFinalizados],
+          ["Fechado", "Fechados", totalFechados],
+        ].map(([value, label, count]) => (
+          <button
+            key={String(value)}
+            className={`filter-tab ${filterStatus === value ? "active" : ""}`}
+            onClick={() => setFilterStatus(value as FilterStatus)}
+          >
+            <span>{label}</span>
+            <span className="filter-count">{count}</span>
+          </button>
+        ))}
       </div>
 
       <div className="meus-chamados-list">
         {filteredTickets.length === 0 ? (
-          <div className="meus-chamados-empty">Nenhum chamado encontrado</div>
+          <div className="meus-chamados-empty">
+            <strong>Nenhum chamado encontrado</strong>
+            <span>Ajuste os filtros ou acompanhe novas solicitações por aqui.</span>
+          </div>
         ) : (
           filteredTickets.map((ticket) => (
-            <div key={ticket.id} className="meus-chamados-card">
+            <div
+              key={ticket.id}
+              className={`meus-chamados-card sla-${getSlaClass(
+                ticket.prazo_resolucao,
+                ticket.status,
+              )}`}
+              onClick={() => onTicketClick?.(ticket)}
+              role={onTicketClick ? "button" : undefined}
+              tabIndex={onTicketClick ? 0 : undefined}
+              onKeyDown={(event) => {
+                if (onTicketClick && event.key === "Enter") {
+                  onTicketClick(ticket);
+                }
+              }}
+            >
               <div className="chamado-card-header">
                 <div className="chamado-title-area">
                   <span className="chamado-id">Chamado #{ticket.id}</span>
@@ -272,7 +370,9 @@ export function MeusChamados({
                     {statusLabelMap[ticket.status] ?? ticket.status}
                   </span>
                   <span
-                    className={`prioridade-badge ${normalizeClass(ticket.prioridade)}`}
+                    className={`prioridade-badge ${normalizeClass(
+                      ticket.prioridade,
+                    )}`}
                   >
                     {prioridadeLabelMap[ticket.prioridade] ?? ticket.prioridade}
                   </span>
@@ -281,7 +381,7 @@ export function MeusChamados({
 
               <div className="chamado-card-body">
                 <div className="chamado-description-block">
-                  <label>Descricao</label>
+                  <label>Descrição</label>
                   <p>{ticket.descricao}</p>
                 </div>
 
@@ -301,17 +401,23 @@ export function MeusChamados({
                     </span>
                   </div>
                   <div className="chamado-info-item">
-                    <label>SLA de solucao</label>
-                    <span>
+                    <label>SLA de solução</label>
+                    <span
+                      className={`sla-text ${getSlaClass(
+                        ticket.prazo_resolucao,
+                        ticket.status,
+                      )}`}
+                    >
                       <AlertCircle className="icon-small" />
-                      {formatDate(ticket.prazo_resolucao)}
+                      {formatDeadlineDistance(ticket.prazo_resolucao)}
                     </span>
+                    <small>{formatDate(ticket.prazo_resolucao)}</small>
                   </div>
                   <div className="chamado-info-item">
-                    <label>Tecnico</label>
+                    <label>Técnico</label>
                     <span>
                       <UserRound className="icon-small" />
-                      {ticket.tecnico?.nome ?? "Nao atribuido"}
+                      {ticket.tecnico?.nome ?? "Não atribuído"}
                     </span>
                   </div>
                 </div>
@@ -324,7 +430,10 @@ export function MeusChamados({
                     <button
                       type="button"
                       className="atribuir-mim-btn"
-                      onClick={() => handleAssignToMe(Number(ticket.id))}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleAssignToMe(Number(ticket.id));
+                      }}
                     >
                       Atribuir a mim
                     </button>
@@ -338,6 +447,7 @@ export function MeusChamados({
                     <select
                       className="admin-assign-select"
                       value={selectedTechnicians[ticket.id] ?? ""}
+                      onClick={(event) => event.stopPropagation()}
                       onChange={(event) =>
                         setSelectedTechnicians((current) => ({
                           ...current,
@@ -355,9 +465,10 @@ export function MeusChamados({
                     <button
                       type="button"
                       className="atribuir-mim-btn"
-                      onClick={() =>
-                        handleAssignToTechnician(Number(ticket.id))
-                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleAssignToTechnician(Number(ticket.id));
+                      }}
                     >
                       Atribuir técnico
                     </button>
@@ -372,7 +483,10 @@ export function MeusChamados({
                     <button
                       type="button"
                       className="finalizar-btn"
-                      onClick={() => handleFinalizeTicket(Number(ticket.id))}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleFinalizeTicket(Number(ticket.id));
+                      }}
                     >
                       Finalizar
                     </button>

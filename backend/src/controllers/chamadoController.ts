@@ -1,6 +1,8 @@
 import { Response } from "express";
+import { Op, WhereOptions } from "sequelize";
 import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
+import Usuario from "../models/Usuario";
 import { registrarLog } from "../utils/logChamado";
 
 // CRIAR CHAMADO
@@ -71,14 +73,43 @@ export const criarChamado = async (req: any, res: Response) => {
 export const listarChamados = async (req: any, res: Response) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 5;
+    const rawLimit = Number(req.query.limit) || 10;
+    const limit = Math.min(Math.max(rawLimit, 1), 100);
     const offset = (page - 1) * limit;
+    const status = String(req.query.status ?? "").trim().toUpperCase();
+    const prioridade = String(req.query.prioridade ?? "").trim().toUpperCase();
+    const busca = String(req.query.busca ?? "").trim();
+
+    const where: WhereOptions = {};
+    const statusPermitidos = [
+      "NOVO",
+      "ATRIBUIDO",
+      "EM_ATENDIMENTO",
+      "FINALIZADO",
+      "FECHADO",
+    ];
+    const prioridadesPermitidas = ["BAIXA", "MEDIA", "ALTA", "URGENTE"];
+
+    if (status && statusPermitidos.includes(status)) {
+      where.status = status;
+    }
+
+    if (prioridade && prioridadesPermitidas.includes(prioridade)) {
+      where.prioridade = prioridade;
+    }
+
+    if (busca) {
+      (where as any)[Op.or] = [
+        { titulo: { [Op.like]: `%${busca}%` } },
+        { descricao: { [Op.like]: `%${busca}%` } },
+      ];
+    }
 
     let result;
 
     if (req.usuario.tipo === "CLIENTE") {
       result = await Chamado.findAndCountAll({
-        where: { usuario_id: req.usuario.id },
+        where: { ...where, usuario_id: req.usuario.id },
         include: ["usuario", "tecnico", "categoria"],
         limit,
         offset,
@@ -86,6 +117,7 @@ export const listarChamados = async (req: any, res: Response) => {
       });
     } else {
       result = await Chamado.findAndCountAll({
+        where,
         include: ["usuario", "tecnico", "categoria"],
         limit,
         offset,
@@ -187,12 +219,16 @@ export const atualizarChamado = async (req: any, res: Response) => {
       return res.status(403).json({ erro: "Sem permissao" });
     }
 
-    if (
-      req.usuario.tipo === "SUPORTE" &&
-      nextStatus &&
-      nextStatus !== "FINALIZADO"
-    ) {
-      return res.status(403).json({ erro: "Tecnico so pode finalizar" });
+    if (req.usuario.tipo === "SUPORTE" && nextStatus) {
+      const suportePodeAlterar =
+        chamado.tecnico_id === req.usuario.id &&
+        ["EM_ATENDIMENTO", "FINALIZADO"].includes(nextStatus);
+
+      if (!suportePodeAlterar) {
+        return res.status(403).json({
+          erro: "Tecnico so pode iniciar ou finalizar chamados atribuidos a ele",
+        });
+      }
     }
 
     if (clienteValidandoChamado && observacaoValidacao.length < 5) {
@@ -269,6 +305,12 @@ export const atribuirChamado = async (req: any, res: Response) => {
       return res.status(403).json({ erro: "Sem permissao" });
     }
 
+    const tecnico = await Usuario.findByPk(tecnico_id);
+
+    if (!tecnico || tecnico.getDataValue("tipo") !== "SUPORTE") {
+      return res.status(400).json({ erro: "Tecnico invalido" });
+    }
+
     if (chamado.tecnico_id) {
       return res.status(400).json({
         erro: "Ja possui tecnico",
@@ -288,7 +330,7 @@ export const atribuirChamado = async (req: any, res: Response) => {
       status_novo: "ATRIBUIDO",
       usuario_id: req.usuario.id,
       acao: "ATRIBUIU",
-      descricao: `Atribuido ao tecnico ${tecnico_id}`,
+      descricao: `Atribuido ao tecnico ${tecnico.getDataValue("nome")}`,
     });
 
     res.json({ mensagem: "Atribuido com sucesso" });

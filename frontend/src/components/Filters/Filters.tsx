@@ -1,12 +1,14 @@
-import { Filter } from 'lucide-react';
-import './filters.css';
+import { Filter, Search } from "lucide-react";
+import "./filters.css";
 
 interface FiltersProps {
+  searchTerm: string;
   statusFilter: string;
   prioridadeFilter: string;
   dataFilter: string;
   activeCount?: number;
   resultCount?: number;
+  onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onPrioridadeChange: (value: string) => void;
   onDataChange: (value: string) => void;
@@ -14,11 +16,13 @@ interface FiltersProps {
 }
 
 export function Filters({
+  searchTerm,
   statusFilter,
   prioridadeFilter,
   dataFilter,
   activeCount = 0,
   resultCount,
+  onSearchChange,
   onStatusChange,
   onPrioridadeChange,
   onDataChange,
@@ -35,6 +39,17 @@ export function Filters({
               <small>{resultCount} chamado(s) encontrados</small>
             )}
           </div>
+        </div>
+
+        <div className="filter-search">
+          <Search />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Buscar por ID, título, cliente, técnico..."
+            aria-label="Buscar chamados"
+          />
         </div>
 
         <div className="filter-group">
@@ -90,7 +105,7 @@ export function Filters({
             type="button"
             className="filters-clear-btn"
             onClick={onClear}
-            disabled={activeCount === 0}
+            disabled={activeCount === 0 && searchTerm.trim().length === 0}
           >
             Limpar filtros
             {activeCount > 0 && <strong>{activeCount}</strong>}

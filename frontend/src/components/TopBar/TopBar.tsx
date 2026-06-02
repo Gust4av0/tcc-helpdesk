@@ -21,6 +21,7 @@ export function TopBar({
   onOpenNewTickets,
 }: TopBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const displayName = user?.nome ?? "Usuário";
   const displayRole = user?.tipo ?? "Convidado";
   const canReceiveTicketNotifications =
@@ -39,7 +40,7 @@ export function TopBar({
             className={`topbar-notification-btn ${
               newTicketsCount > 0 ? "has-notifications" : ""
             }`}
-            onClick={onOpenNewTickets}
+            onClick={() => setIsNotificationsOpen((prev) => !prev)}
             aria-label={notificationLabel}
             title={notificationLabel}
           >
@@ -50,6 +51,30 @@ export function TopBar({
               </span>
             )}
           </button>
+        )}
+
+        {canReceiveTicketNotifications && isNotificationsOpen && (
+          <div className="topbar-notifications-panel">
+            <div className="topbar-notifications-header">
+              <strong>Novos chamados</strong>
+              <span>{newTicketsCount}</span>
+            </div>
+            <p>
+              {newTicketsCount > 0
+                ? "Há solicitações aguardando triagem ou atribuição."
+                : "Nenhum chamado novo aguardando atribuição."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onOpenNewTickets?.();
+                setIsNotificationsOpen(false);
+              }}
+              disabled={newTicketsCount === 0}
+            >
+              Ver fila de chamados
+            </button>
+          </div>
         )}
 
         <div className="topbar-user-wrapper">

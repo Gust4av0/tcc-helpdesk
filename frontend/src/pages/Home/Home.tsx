@@ -1,10 +1,5 @@
 import "../../styles/Home.css";
-import {
-  CheckCircle,
-  Zap,
-  Users,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, CheckCircle, Clock, MessageSquare, ShieldCheck } from "lucide-react";
 
 export default function Home({
   onNavigate,
@@ -13,83 +8,91 @@ export default function Home({
 }) {
   return (
     <div className="landing-container">
-      <div className="landing-content">
-        <div className="landing-hero">
-          <h1 className="landing-title">HelpDesk</h1>
-          <p className="landing-subtitle">
-            Sistema de gerenciamento de chamados técnicos
-          </p>
-
-          <p className="landing-description">
-            O HelpDesk é uma plataforma desenvolvida para
-            facilitar a gestão de chamados técnicos entre
-            clientes e equipes de suporte. O sistema permite que
-            clientes abram chamados, acompanhem o andamento, e
-            se comuniquem diretamente com técnicos responsáveis.
-            Já os técnicos podem gerenciar atendimentos,
-            atualizar status e garantir o cumprimento de SLAs. O
-            objetivo é organizar o fluxo de suporte, melhorar a
-            comunicação e aumentar a eficiência no atendimento.
-          </p>
-
-          <div className="landing-buttons">
-            <button
-              data-testid="home-login-button"
-              className="btn-primary"
-              onClick={() => onNavigate("login")}
-            >
-              Entrar
-              <ArrowRight size={20} />
-            </button>
-
-            <button
-              data-testid="home-register-button"
-              className="btn-secondary"
-              onClick={() => onNavigate("register")}
-            >
-              Cadastre-se
-            </button>
-          </div>
-        </div>
-
-        <div className="landing-features">
-          <div className="feature-card">
-            <div className="feature-icon feature-icon-purple">
-              <CheckCircle size={28} />
-            </div>
-            <h3 className="feature-title">Organização</h3>
-            <p className="feature-description">
-              Gerencie todos os chamados em um único lugar
+      <main className="landing-content">
+        <section className="landing-hero">
+          <div className="landing-copy">
+            <span className="landing-kicker">Gestão de suporte técnico</span>
+            <h1 className="landing-title">HelpDesk</h1>
+            <p className="landing-subtitle">
+              Controle chamados, SLAs, técnicos e conversas em uma experiência
+              organizada para operação diária.
             </p>
-          </div>
 
-          <div className="feature-card">
-            <div className="feature-icon feature-icon-blue">
-              <Zap size={28} />
+            <div className="landing-buttons">
+              <button
+                data-testid="home-login-button"
+                className="btn-primary"
+                onClick={() => onNavigate("login")}
+              >
+                Entrar
+                <ArrowRight size={20} />
+              </button>
+
+              <button
+                data-testid="home-register-button"
+                className="btn-secondary"
+                onClick={() => onNavigate("register")}
+              >
+                Cadastre-se
+              </button>
             </div>
-            <h3 className="feature-title">Rapidez</h3>
-            <p className="feature-description">
-              Atendimento ágil com controle de SLA
-            </p>
           </div>
 
-          <div className="feature-card">
-            <div className="feature-icon feature-icon-gradient">
-              <Users size={28} />
+          <div className="landing-preview" aria-hidden="true">
+            <div className="preview-topbar">
+              <span />
+              <span />
+              <span />
             </div>
-            <h3 className="feature-title">Comunicação</h3>
-            <p className="feature-description">
-              Interação direta entre clientes e técnicos
-            </p>
+            <div className="preview-grid">
+              <div className="preview-card strong">
+                <CheckCircle />
+                <strong>32</strong>
+                <span>Ativos</span>
+              </div>
+              <div className="preview-card warning">
+                <Clock />
+                <strong>6</strong>
+                <span>SLA 24h</span>
+              </div>
+              <div className="preview-ticket">
+                <span>Chamado #128</span>
+                <strong>Falha de acesso ao sistema</strong>
+                <div />
+              </div>
+              <div className="preview-ticket">
+                <span>Chamado #129</span>
+                <strong>Impressora sem conexão</strong>
+                <div />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="landing-background">
-        <div className="bg-circle bg-circle-1"></div>
-        <div className="bg-circle bg-circle-2"></div>
-        <div className="bg-circle bg-circle-3"></div>
-      </div>
+        <section className="landing-features">
+          <div className="feature-card">
+            <ShieldCheck />
+            <div>
+              <h3>Controle</h3>
+              <p>Permissões por perfil e fluxo claro de atendimento.</p>
+            </div>
+          </div>
+          <div className="feature-card">
+            <Clock />
+            <div>
+              <h3>SLA visível</h3>
+              <p>Prazos aparecem no centro da decisão operacional.</p>
+            </div>
+          </div>
+          <div className="feature-card">
+            <MessageSquare />
+            <div>
+              <h3>Comunicação</h3>
+              <p>Cliente e suporte conversam dentro do chamado.</p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

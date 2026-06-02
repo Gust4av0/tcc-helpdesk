@@ -12,6 +12,7 @@ interface TecnicosDisponiveisProps {
   isOpen: boolean;
   onClose: () => void;
   tecnicos: Tecnico[];
+  workloads?: Record<number, number>;
   onAtribuirClick?: (tecnico: Tecnico) => void;
 }
 
@@ -19,6 +20,7 @@ export function TecnicosDisponiveis({
   isOpen,
   onClose,
   tecnicos,
+  workloads = {},
   onAtribuirClick,
 }: TecnicosDisponiveisProps) {
   if (!isOpen) return null;
@@ -70,10 +72,16 @@ export function TecnicosDisponiveis({
                     </div>
                   </div>
 
-                  <div className="tecnico-status">
+                  <div
+                    className={`tecnico-status ${
+                      workloads[tecnico.id] > 0 ? "busy" : ""
+                    }`}
+                  >
                     <CheckCircle />
                     <span>
-                      {tecnico.tipo === "SUPORTE" ? "Disponível" : tecnico.tipo}
+                      {workloads[tecnico.id] > 0
+                        ? `${workloads[tecnico.id]} ativo(s)`
+                        : "Disponível"}
                     </span>
                   </div>
 

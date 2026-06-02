@@ -15,8 +15,20 @@ export interface Message {
   created_at: string;
 }
 
+export interface MessageSummary {
+  chamado_id: number;
+  last_message_id: number;
+  last_usuario_id: number;
+  last_mensagem: string;
+  last_created_at: string;
+}
+
 export async function listMessages(chamadoId: number) {
   return apiRequest<Message[]>(`/mensagens/${chamadoId}`);
+}
+
+export async function listMessageSummaries() {
+  return apiRequest<MessageSummary[]>("/mensagens/resumos");
 }
 
 export async function sendMessage(

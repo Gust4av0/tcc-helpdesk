@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: flex-end;
   padding: 0 1.5rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   backdrop-filter: blur(10px);
 }
 
@@ -56,6 +56,7 @@
   align-items: center;
   gap: 1rem;
   margin-left: auto;
+  position: relative;
 }
 
 .topbar-notification-btn {
@@ -83,14 +84,14 @@
 }
 
 .topbar-notification-btn:hover {
-  color: #1d4ed8;
-  background-color: #eff6ff;
+  color: #0f4c81;
+  background-color: #eef6ff;
   border-color: #bfdbfe;
 }
 
 .topbar-notification-btn.has-notifications {
-  color: #1d4ed8;
-  background-color: #eff6ff;
+  color: #0f4c81;
+  background-color: #eef6ff;
   border-color: #bfdbfe;
 }
 
@@ -111,6 +112,67 @@
   font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;
+}
+
+.topbar-notifications-panel {
+  position: absolute;
+  top: calc(100% + 0.8rem);
+  right: 4.7rem;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  z-index: 120;
+}
+
+.topbar-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topbar-notifications-header strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.topbar-notifications-header span {
+  display: grid;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  color: #ffffff;
+  background: #0f4c81;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.topbar-notifications-panel p {
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin: 0.75rem 0 1rem;
+}
+
+.topbar-notifications-panel button {
+  width: 100%;
+  min-height: 2.4rem;
+  color: #ffffff;
+  background: #0f4c81;
+  border: 0;
+  border-radius: 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.topbar-notifications-panel button:disabled {
+  color: #94a3b8;
+  background: #f1f5f9;
+  cursor: not-allowed;
 }
 
 
@@ -145,7 +207,7 @@
 .topbar-user-avatar {
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(135deg, #020617, #04157a 55%, #2563eb);
+  background: #0f4c81;
   border-radius: 9999px;
   display: flex;
   align-items: center;
@@ -171,7 +233,7 @@
   width: 250px;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
   padding: 0.75rem 0;
   z-index: 100;
@@ -221,8 +283,8 @@
 }
 
 .dropdown-item:hover {
-  background: #eef2ff;
-  color: #1d4ed8;
+  background: #eef6ff;
+  color: #0f4c81;
 }
 
 
@@ -258,7 +320,7 @@
 .dropdown-avatar {
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(135deg, #020617, #04157a 55%, #2563eb);
+  background: #0f4c81;
   border-radius: 9999px;
   display: flex;
   align-items: center;

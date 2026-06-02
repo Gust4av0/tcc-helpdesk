@@ -36,10 +36,27 @@ export interface Paginated<T> {
   data: T[];
 }
 
-export async function listTickets(page = 1, limit = 10) {
-  return apiRequest<Paginated<Chamado>>(
-    `/chamados?page=${page}&limit=${limit}`,
-  );
+export interface TicketListFilters {
+  status?: string;
+  prioridade?: string;
+  busca?: string;
+}
+
+export async function listTickets(
+  page = 1,
+  limit = 10,
+  filters: TicketListFilters = {},
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (filters.status) params.set("status", filters.status);
+  if (filters.prioridade) params.set("prioridade", filters.prioridade);
+  if (filters.busca) params.set("busca", filters.busca);
+
+  return apiRequest<Paginated<Chamado>>(`/chamados?${params.toString()}`);
 }
 
 export async function getTicket(id: number) {

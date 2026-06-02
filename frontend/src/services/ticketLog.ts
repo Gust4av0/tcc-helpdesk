@@ -6,6 +6,11 @@ export interface TicketLog {
   status_anterior?: string | null;
   status_novo?: string | null;
   usuario_id?: number | null;
+  usuario?: {
+    id: number;
+    nome: string;
+    tipo: string;
+  };
   acao: string;
   descricao: string;
   created_at: string;

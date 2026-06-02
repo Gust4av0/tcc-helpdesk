@@ -6,23 +6,25 @@
   height: 100%;
   background-color: rgba(15, 23, 42, 0.58);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-end;
   z-index: 1000;
-  padding: 1rem;
+  padding: 0;
   backdrop-filter: blur(6px);
 }
 
 .ticket-details-container {
   background-color: #f8fafc;
-  border-radius: 1.25rem;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.32);
-  max-width: 68rem;
-  width: 100%;
-  max-height: 90vh;
+  border-radius: 1rem 0 0 1rem;
+  box-shadow: -24px 0 70px rgba(15, 23, 42, 0.28);
+  max-width: 62rem;
+  width: min(62rem, 100vw);
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: ticketDrawerIn 0.2s ease-out;
 }
 
 
@@ -31,9 +33,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  background:
-    radial-gradient(circle at top right, rgba(37, 99, 235, 0.45), transparent 18rem),
-    linear-gradient(135deg, #020617, #04157a);
+  background: #0f4c81;
   color: white;
 }
 
@@ -112,7 +112,7 @@
 .ticket-details-tabs button.active,
 .ticket-details-tabs button:hover {
   color: #1d4ed8;
-  background: #eff6ff;
+  background: #eef6ff;
   border-color: #bfdbfe;
 }
 
@@ -679,6 +679,17 @@
   background: linear-gradient(135deg, #04157a, #2563eb);
   border-color: transparent;
   border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+@keyframes ticketDrawerIn {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ticket-chat-message time {

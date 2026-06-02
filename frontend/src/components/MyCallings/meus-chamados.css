@@ -6,6 +6,10 @@
 
 .meus-chamados-header {
   margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .meus-chamados-header h1 {
@@ -19,6 +23,80 @@
   font-size: 1rem;
   color: #6b7280;
   margin: 0;
+}
+
+.assumir-proximo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  color: #ffffff;
+  background: #04157a;
+  border: 0;
+  border-radius: 9999px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.assumir-proximo-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.assumir-proximo-btn:hover {
+  background: #243e9f;
+}
+
+.meus-chamados-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.meus-chamados-toolbar > span {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.meus-chamados-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 2.75rem;
+  padding: 0 0.9rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  color: #64748b;
+}
+
+.meus-chamados-search svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.meus-chamados-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #111827;
+  background: transparent;
+  font-weight: 600;
+}
+
+.meus-chamados-search:focus-within {
+  border-color: #04157a;
+  box-shadow: 0 0 0 3px rgba(4, 21, 122, 0.12);
 }
 
 
@@ -85,6 +163,9 @@
 }
 
 .meus-chamados-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   padding: 3rem 2rem;
   background: #ffffff;
   border: 1px dashed #cbd5e1;
@@ -92,6 +173,12 @@
   color: #64748b;
   text-align: center;
   font-weight: 600;
+}
+
+.meus-chamados-empty span {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 
@@ -142,6 +229,22 @@
 .meus-chamados-card:hover {
   border-color: #04157a;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.meus-chamados-card[role="button"] {
+  cursor: pointer;
+}
+
+.meus-chamados-card.sla-danger {
+  border-left: 4px solid #dc2626;
+}
+
+.meus-chamados-card.sla-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.meus-chamados-card.sla-ok {
+  border-left: 4px solid #10b981;
 }
 
 
@@ -381,6 +484,27 @@
   overflow-wrap: anywhere;
 }
 
+.chamado-info-item small {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chamado-info-item .sla-text.danger,
+.chamado-info-item .sla-text.danger svg {
+  color: #b91c1c;
+}
+
+.chamado-info-item .sla-text.warning,
+.chamado-info-item .sla-text.warning svg {
+  color: #a16207;
+}
+
+.chamado-info-item .sla-text.ok,
+.chamado-info-item .sla-text.ok svg {
+  color: #047857;
+}
+
 .chamado-tecnico {
   display: flex;
   align-items: center;
@@ -425,6 +549,12 @@
 @media (max-width: 768px) {
   .meus-chamados-header h1 {
     font-size: 1.5rem;
+  }
+
+  .meus-chamados-header,
+  .meus-chamados-toolbar {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .meus-chamados-filters {

@@ -41,8 +41,6 @@ interface TicketTableProps {
   onTicketClick?: (ticket: Ticket) => void;
 }
 
-const PAGE_SIZE = 5;
-
 type SortKey =
   | "id"
   | "categoria"
@@ -69,6 +67,23 @@ function formatDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString("pt-BR");
+}
+
+function formatRelativeDeadline(value?: string) {
+  if (!value) return "";
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime())) return "";
+
+  const diffMs = deadline.getTime() - Date.now();
+  const absHours = Math.max(1, Math.ceil(Math.abs(diffMs) / 3600000));
+  const days = Math.floor(absHours / 24);
+  const hours = absHours % 24;
+  const time =
+    days > 0
+      ? `${days}d${hours > 0 ? ` ${hours}h` : ""}`
+      : `${absHours}h`;
+
+  return diffMs < 0 ? `Atrasado há ${time}` : `Vence em ${time}`;
 }
 
 function getCategoriaLabel(ticket: Ticket) {
@@ -119,7 +134,7 @@ function getResolutionSla(ticket: Ticket) {
   if (hoursRemaining < 0) {
     return {
       className: "atrasado",
-      label: "Atrasado",
+      label: formatRelativeDeadline(ticket.prazo_resolucao) || "Atrasado",
       date: ticket.prazo_resolucao,
       icon: AlertCircle,
     };
@@ -128,7 +143,7 @@ function getResolutionSla(ticket: Ticket) {
   if (hoursRemaining <= 24) {
     return {
       className: "proximo",
-      label: "Proximo",
+      label: formatRelativeDeadline(ticket.prazo_resolucao) || "Próximo",
       date: ticket.prazo_resolucao,
       icon: Clock,
     };
@@ -136,10 +151,25 @@ function getResolutionSla(ticket: Ticket) {
 
   return {
     className: "no-prazo",
-    label: "No prazo",
+    label: formatRelativeDeadline(ticket.prazo_resolucao) || "No prazo",
     date: ticket.prazo_resolucao,
     icon: CheckCircle2,
   };
+}
+
+function getSlaProgress(ticket: Ticket) {
+  if (!ticket.prazo_resolucao) return 0;
+  const end = new Date(ticket.prazo_resolucao).getTime();
+  if (Number.isNaN(end)) return 0;
+
+  const startValue = getDataAbertura(ticket);
+  const start = startValue ? new Date(startValue).getTime() : Date.now();
+  if (Number.isNaN(start) || end <= start) return 100;
+
+  return Math.min(
+    100,
+    Math.max(0, Math.round(((Date.now() - start) / (end - start)) * 100)),
+  );
 }
 
 export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
@@ -147,6 +177,7 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -184,10 +215,10 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
     });
   }, [displayTickets, sortDirection, sortKey]);
 
-  const totalPages = Math.ceil(sortedTickets.length / PAGE_SIZE);
+  const totalPages = Math.ceil(sortedTickets.length / pageSize);
   const paginatedTickets = sortedTickets.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
   );
 
   const handleSort = (key: SortKey) => {
@@ -244,14 +275,19 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                 return (
                   <tr
                     key={ticket.id}
+                    className={`ticket-row priority-${normalizeClass(
+                      ticket.prioridade,
+                    )}`}
                     onClick={() => onTicketClick?.(ticket)}
                     style={{ cursor: "pointer" }}
                   >
-                    <td>{ticket.id}</td>
-                    <td>{getCategoriaLabel(ticket)}</td>
-                    <td>{getClienteLabel(ticket)}</td>
+                    <td data-label="ID">
+                      <span className="ticket-id">#{ticket.id}</span>
+                    </td>
+                    <td data-label="Categoria">{getCategoriaLabel(ticket)}</td>
+                    <td data-label="Cliente">{getClienteLabel(ticket)}</td>
 
-                    <td>
+                    <td data-label="Status">
                       <span
                         className={`status-badge ${normalizeClass(ticket.status)}`}
                       >
@@ -259,7 +295,7 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                       </span>
                     </td>
 
-                    <td>
+                    <td data-label="Prioridade">
                       <span
                         className={`prioridade-badge ${normalizeClass(
                           ticket.prioridade,
@@ -269,16 +305,19 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                       </span>
                     </td>
 
-                    <td>
+                    <td data-label="SLA Solução">
                       <div className={`sla-indicator ${sla.className}`}>
                         <SlaIcon />
                         <span>{sla.label}</span>
                         {sla.date && <small>{formatDate(sla.date)}</small>}
                       </div>
+                      <div className={`sla-progress ${sla.className}`}>
+                        <span style={{ width: `${getSlaProgress(ticket)}%` }} />
+                      </div>
                     </td>
 
-                    <td>{formatDate(getDataAbertura(ticket))}</td>
-                    <td>{getTecnicoLabel(ticket)}</td>
+                    <td data-label="Data">{formatDate(getDataAbertura(ticket))}</td>
+                    <td data-label="Técnico">{getTecnicoLabel(ticket)}</td>
                   </tr>
                 );
               })
@@ -292,19 +331,36 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
           <span>
             Exibindo {paginatedTickets.length} de {sortedTickets.length} chamados
           </span>
-          <div className="ticket-pagination-pages">
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (page) => (
-                <button
-                  key={page}
-                  type="button"
-                  className={page === currentPage ? "active" : ""}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ),
-            )}
+          <div className="ticket-pagination-controls">
+            <label>
+              Itens
+              <select
+                value={pageSize}
+                onChange={(event) => {
+                  setPageSize(Number(event.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </label>
+            <div className="ticket-pagination-pages">
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    className={page === currentPage ? "active" : ""}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+            </div>
           </div>
         </div>
       )}

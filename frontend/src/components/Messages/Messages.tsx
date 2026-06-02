@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, MessageSquare, ArrowLeft, Send, Paperclip } from "lucide-react";
 import { listTickets, Chamado } from "../../services/ticket";
 import {
@@ -23,7 +23,13 @@ interface MessagesProps {
   isOpen: boolean;
   onClose: () => void;
   user: AuthUser | null;
+  unreadTicketIds?: Set<number>;
+  onTicketRead?: (ticketId: number, messageId?: number) => void;
+  onMessagesChanged?: () => void;
 }
+
+const TICKET_REFRESH_MS = 10000;
+const OPEN_CHAT_REFRESH_MS = 4000;
 
 function formatDateTime(value?: string) {
   if (!value) return "";
@@ -40,7 +46,14 @@ function formatDateTime(value?: string) {
   });
 }
 
-export function Messages({ isOpen, onClose, user }: MessagesProps) {
+export function Messages({
+  isOpen,
+  onClose,
+  user,
+  unreadTicketIds = new Set<number>(),
+  onTicketRead,
+  onMessagesChanged,
+}: MessagesProps) {
   const [tickets, setTickets] = useState<Chamado[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Chamado | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -51,11 +64,12 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
     null,
   );
   const [showFinalizedTickets, setShowFinalizedTickets] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { addToast } = useToast();
 
-  const loadTickets = async () => {
+  const loadTickets = async (showError = true) => {
     try {
-      const result = await listTickets();
+      const result = await listTickets(1, 100);
       const allTickets = result.data;
 
       const accessibleTickets = allTickets.filter((ticket) => {
@@ -78,17 +92,29 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
 
       setTickets(accessibleTickets);
     } catch {
-      addToast("error", "Erro ao carregar chamados");
+      if (showError) {
+        addToast("error", "Erro ao carregar chamados");
+      }
     }
   };
 
-  const loadMessages = async (ticketId: number) => {
+  const loadMessages = async (
+    ticketId: number,
+    options: { showError?: boolean; markAsRead?: boolean } = {},
+  ) => {
     try {
       const result = await listMessages(ticketId);
       setMessages(result);
+      const lastMessage = result[result.length - 1];
+
+      if (options.markAsRead && lastMessage) {
+        onTicketRead?.(ticketId, lastMessage.id);
+      }
     } catch {
-      setMessages([]);
-      addToast("error", "Erro ao carregar mensagens");
+      if (options.showError !== false) {
+        setMessages([]);
+        addToast("error", "Erro ao carregar mensagens");
+      }
     }
   };
 
@@ -98,10 +124,40 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
   }, [isOpen, user]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    const interval = window.setInterval(() => {
+      loadTickets(false);
+      onMessagesChanged?.();
+    }, TICKET_REFRESH_MS);
+
+    return () => window.clearInterval(interval);
+  }, [isOpen, onMessagesChanged, user]);
+
+  useEffect(() => {
     if (selectedTicket) {
-      loadMessages(Number(selectedTicket.id));
+      loadMessages(Number(selectedTicket.id), { markAsRead: true });
     }
   }, [selectedTicket]);
+
+  useEffect(() => {
+    if (!isOpen || !selectedTicket) return;
+
+    const ticketId = Number(selectedTicket.id);
+    const interval = window.setInterval(() => {
+      loadMessages(ticketId, {
+        showError: false,
+        markAsRead: true,
+      });
+      onMessagesChanged?.();
+    }, OPEN_CHAT_REFRESH_MS);
+
+    return () => window.clearInterval(interval);
+  }, [isOpen, onMessagesChanged, selectedTicket]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
 
   if (!isOpen) return null;
 
@@ -144,7 +200,8 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
       );
       setNewMessage("");
       setSelectedAttachment(null);
-      loadMessages(Number(selectedTicket.id));
+      await loadMessages(Number(selectedTicket.id), { markAsRead: true });
+      onMessagesChanged?.();
     } catch {
       addToast("error", "Erro ao enviar mensagem");
     }
@@ -181,6 +238,12 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
   const handleRemoveAttachment = () => {
     setSelectedAttachment(null);
   };
+
+  const visibleTickets = tickets.filter((ticket) =>
+    showFinalizedTickets
+      ? ticket.status === "FINALIZADO" || ticket.status === "FECHADO"
+      : ["ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
+  );
 
   return (
     <div className="messages-overlay" onClick={handleOverlayClick}>
@@ -219,16 +282,13 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                 </button>
               </div>
               <div className="ticket-list">
-                {tickets
-                  .filter((ticket) =>
-                    showFinalizedTickets
-                      ? ticket.status === "FINALIZADO" || ticket.status === "FECHADO"
-                      : ["ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
-                  )
-                  .map((ticket) => (
+                {visibleTickets.map((ticket) => {
+                  const hasUnreadMessages = unreadTicketIds.has(ticket.id);
+
+                  return (
                     <div
                       key={ticket.id}
-                      className="ticket-list-item"
+                      className={`ticket-list-item ${hasUnreadMessages ? "unread" : ""}`}
                       onClick={() => handleTicketClick(ticket)}
                     >
                       <div className="ticket-list-item-state">
@@ -242,21 +302,23 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                           {ticket.categoria?.nome ?? "Sem categoria"}
                         </span>
                       </div>
-                      <MessageSquare className="ticket-list-item-icon" />
+                      <div className="ticket-list-item-message-state">
+                        {hasUnreadMessages && (
+                          <span className="ticket-unread-badge">Nova</span>
+                        )}
+                        <MessageSquare className="ticket-list-item-icon" />
+                      </div>
                     </div>
-                  ))}
+                  );
+                })}
 
-                {tickets.filter((ticket) =>
-                  showFinalizedTickets
-                    ? ticket.status === "FINALIZADO" || ticket.status === "FECHADO"
-                    : ["ATRIBUIDO", "EM_ATENDIMENTO"].includes(ticket.status),
-                ).length === 0 && (
+                {visibleTickets.length === 0 && (
                   <div className="messages-empty-state">
                     Nenhum chamado atribuido para conversa.
                   </div>
                 )}
               </div>
-          </>
+            </>
           ) : (
             <div className="chat-container">
               <div className="chat-header">
@@ -344,6 +406,7 @@ export function Messages({ isOpen, onClose, user }: MessagesProps) {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
 
               {isTicketFinalized && (

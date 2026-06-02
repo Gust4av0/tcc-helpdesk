@@ -1,5 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/database";
+import Usuario from "./Usuario";
 
 class ChamadoLog extends Model {
   id!: number;
@@ -52,5 +53,7 @@ ChamadoLog.init(
     updatedAt: false,
   }
 );
+
+ChamadoLog.belongsTo(Usuario, { foreignKey: "usuario_id", as: "usuario" });
 
 export default ChamadoLog;

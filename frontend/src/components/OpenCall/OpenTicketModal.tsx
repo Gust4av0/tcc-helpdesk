@@ -8,6 +8,8 @@ interface OpenTicketModalProps {
   categories?: {
     id: number;
     nome: string;
+    sla_atendimento?: number;
+    sla_resolucao?: number;
   }[];
   onSubmit?: (data: {
     title: string;
@@ -16,6 +18,29 @@ interface OpenTicketModalProps {
     priority: string;
   }) => void;
 }
+
+const priorities = [
+  {
+    value: "Baixa",
+    title: "Baixa",
+    description: "Pode aguardar na fila",
+  },
+  {
+    value: "Média",
+    title: "Média",
+    description: "Impacta parte do trabalho",
+  },
+  {
+    value: "Alta",
+    title: "Alta",
+    description: "Afeta operação importante",
+  },
+  {
+    value: "Urgente",
+    title: "Urgente",
+    description: "Paralisa o atendimento",
+  },
+];
 
 export function OpenTicketModal({
   isOpen,
@@ -31,6 +56,10 @@ export function OpenTicketModal({
   });
 
   if (!isOpen) return null;
+
+  const selectedCategory = categories?.find(
+    (category) => category.nome === formData.category,
+  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,7 +93,10 @@ export function OpenTicketModal({
     >
       <div className="modal-container" data-testid="open-ticket-modal">
         <div className="modal-header">
-          <h2 data-testid="modal-title">Abrir Chamado</h2>
+          <div>
+            <span>Novo atendimento</span>
+            <h2 data-testid="modal-title">Abrir Chamado</h2>
+          </div>
 
           <button
             type="button"
@@ -121,32 +153,55 @@ export function OpenTicketModal({
                 data-testid="select-category"
               >
                 <option value="">Selecione uma categoria</option>
-                {categories?.length &&
-                  categories.map((categoria) => (
-                    <option key={categoria.id} value={categoria.nome}>
-                      {categoria.nome}
-                    </option>
-                  ))}
+                {categories?.map((categoria) => (
+                  <option key={categoria.id} value={categoria.nome}>
+                    {categoria.nome}
+                  </option>
+                ))}
               </select>
+              {selectedCategory && (
+                <small className="category-sla-preview">
+                  Atendimento em até {selectedCategory.sla_atendimento ?? "-"}h
+                  {" | "}
+                  solução em até {selectedCategory.sla_resolucao ?? "-"}h
+                </small>
+              )}
             </div>
 
             <div className="form-field">
               <label htmlFor="priority">Prioridade</label>
-              <select
+              <input
                 id="priority"
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="priority-select"
                 required
+                hidden
                 data-testid="select-priority"
-              >
-                <option value="">Selecione a prioridade</option>
-                <option value="Baixa">Baixa</option>
-                <option value="Média">Média</option>
-                <option value="Alta">Alta</option>
-                <option value="Urgente">Urgente</option>
-              </select>
+              />
+              <div className="priority-options">
+                {priorities.map((priority) => (
+                  <button
+                    key={priority.value}
+                    type="button"
+                    className={`priority-option ${priority.value
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .toLowerCase()} ${
+                      formData.priority === priority.value ? "selected" : ""
+                    }`}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        priority: priority.value,
+                      }))
+                    }
+                  >
+                    <strong>{priority.title}</strong>
+                    <span>{priority.description}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="modal-footer">

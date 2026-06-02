@@ -152,7 +152,7 @@ export function TicketDetails({
       return logs.map((log) => ({
         id: log.id,
         acao: log.descricao || log.acao,
-        responsavel: `Usuário #${log.usuario_id ?? "-"}`,
+        responsavel: log.usuario?.nome ?? `Usuário #${log.usuario_id ?? "-"}`,
         data: formatDate(log.created_at),
       }));
     }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import ChamadoLog from "../models/ChamadoLog";
 import Chamado from "../models/Chamado";
+import Usuario from "../models/Usuario";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -57,6 +58,13 @@ router.get("/:chamado_id", authMiddleware, async (req, res) => {
 
     const logs = await ChamadoLog.findAll({
       where: { chamado_id: req.params.chamado_id },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nome", "tipo"],
+        },
+      ],
       order: [["created_at", "DESC"]],
     });
 

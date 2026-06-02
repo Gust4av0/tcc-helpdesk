@@ -34,14 +34,4 @@ export const seed = async () => {
       tipo: "CLIENTE",
     },
   });
-
-  await Categoria.findOrCreate({
-    where: { nome: "Hardware" },
-    defaults: {
-      nome: "Hardware",
-      descricao: "Problemas físicos",
-      sla_atendimento: 4,
-      sla_resolucao: 24,
-    },
-  });
 };

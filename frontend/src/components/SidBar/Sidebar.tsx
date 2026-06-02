@@ -9,6 +9,8 @@ import {
   FolderPlus,
   Users,
   User,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { AuthUser } from "../../services/auth";
 import "./sidebar.css";
@@ -17,13 +19,20 @@ interface SidebarProps {
   activeItem: string;
   onItemClick: (item: string) => void;
   user: AuthUser | null;
+  unreadMessagesCount?: number;
 }
 
-export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
+export function Sidebar({
+  activeItem,
+  onItemClick,
+  user,
+  unreadMessagesCount = 0,
+}: SidebarProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const isSupportOrAdmin =
-    user?.tipo === "ADMIN" || user?.tipo === "SUPORTE";
+  const canSeeTickets =
+    user?.tipo === "ADMIN" || user?.tipo === "SUPORTE" || user?.tipo === "CLIENTE";
   const isAdmin = user?.tipo === "ADMIN";
 
   const menuItems = [
@@ -32,7 +41,7 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
       label: "Dashboard",
       icon: LayoutDashboard,
     },
-    ...(isSupportOrAdmin
+    ...(canSeeTickets
       ? [
           {
             id: "meus-chamados",
@@ -58,10 +67,21 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
       <div className="sidebar-header">
-        <h1>HelpDesk</h1>
-        <p>Sistema de Chamados</p>
+        <div className="sidebar-brand-mark">HD</div>
+        <div className="sidebar-brand-text">
+          <h1>HelpDesk</h1>
+          <p>Sistema de Chamados</p>
+        </div>
+        <button
+          type="button"
+          className="sidebar-collapse-btn"
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+        >
+          {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -76,6 +96,7 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
                   <button
                     onClick={() => setIsOptionsOpen(!isOptionsOpen)}
                     className="sidebar-menu-button"
+                    title={item.label}
                   >
                     <Icon />
                     <span>{item.label}</span>
@@ -85,14 +106,14 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
                     </span>
                   </button>
 
-                  {isOptionsOpen && (
+                  {isOptionsOpen && !isCollapsed && (
                     <div className="sidebar-submenu">
                       <button
                         className="sidebar-subitem"
                         onClick={() => onItemClick("cadastrar-categorias")}
                       >
                         <FolderPlus />
-                        Adicionar Categoria
+                        <span>Adicionar Categoria</span>
                       </button>
 
                       <button
@@ -100,7 +121,7 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
                         onClick={() => onItemClick("tecnicos-disponiveis")}
                       >
                         <Users />
-                        Técnicos Disponíveis
+                        <span>Técnicos Disponíveis</span>
                       </button>
 
                       <button
@@ -108,7 +129,7 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
                         onClick={() => onItemClick("usuarios-cadastrados")}
                       >
                         <User />
-                        Usuários Cadastrados
+                        <span>Usuários Cadastrados</span>
                       </button>
                     </div>
                   )}
@@ -122,9 +143,15 @@ export function Sidebar({ activeItem, onItemClick, user }: SidebarProps) {
                   onClick={() => onItemClick(item.id)}
                   className={`sidebar-menu-button ${isActive ? "active" : ""}`}
                   data-testid={`sidebar-${item.id}`}
+                  title={item.label}
                 >
                   <Icon />
                   <span>{item.label}</span>
+                  {item.id === "chat" && unreadMessagesCount > 0 && (
+                    <span className="sidebar-notification-badge">
+                      {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                    </span>
+                  )}
                 </button>
               </li>
             );

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   criarMensagem,
   listarMensagens,
+  listarResumoMensagens,
 } from "../controllers/chamadoMensagemController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { verificarTipo } from "../middlewares/permissaoMiddleware";
@@ -32,6 +33,13 @@ router.post(
   authMiddleware,
   verificarTipo(["CLIENTE", "SUPORTE", "ADMIN"]),
   criarMensagem,
+);
+
+router.get(
+  "/resumos",
+  authMiddleware,
+  verificarTipo(["CLIENTE", "SUPORTE", "ADMIN"]),
+  listarResumoMensagens,
 );
 
 /**
