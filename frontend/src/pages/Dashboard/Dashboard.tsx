@@ -55,6 +55,11 @@ import { AuthUser } from "../../services/auth";
 import "./Dashboard.css";
 
 const MESSAGE_SUMMARY_POLL_MS = 10000;
+const MAIN_MENU_ITEMS = ["dashboard", "meus-chamados"] as const;
+
+function isMainMenuItem(item: string) {
+  return MAIN_MENU_ITEMS.includes(item as (typeof MAIN_MENU_ITEMS)[number]);
+}
 
 function getSeenMessagesStorageKey(userId: number) {
   return `helpdesk:seen-messages:${userId}`;
@@ -120,6 +125,12 @@ export default function Dashboard({
   const hasLoadedMessageSummariesRef = useRef(false);
   const hasCategories = categories.length > 0;
 
+  const ensureVisibleContent = () => {
+    setActiveMenuItem((current) =>
+      isMainMenuItem(current) ? current : "dashboard",
+    );
+  };
+
   const closeAllOverlays = () => {
     setIsModalOpen(false);
     setIsMessagesOpen(false);
@@ -135,12 +146,58 @@ export default function Dashboard({
 
   const handleMenuClick = (item: string) => {
     closeAllOverlays();
-    setActiveMenuItem(item);
 
-    if (item === "chat") setIsMessagesOpen(true);
-    if (item === "cadastrar-categorias") setIsCategoriasModalOpen(true);
-    if (item === "tecnicos-disponiveis") setIsTecnicosOpen(true);
-    if (item === "usuarios-cadastrados") setIsUsuariosOpen(true);
+    if (item === "chat") {
+      ensureVisibleContent();
+      setIsMessagesOpen(true);
+      return;
+    }
+
+    if (item === "cadastrar-categorias") {
+      ensureVisibleContent();
+      setIsCategoriasModalOpen(true);
+      return;
+    }
+
+    if (item === "tecnicos-disponiveis") {
+      ensureVisibleContent();
+      setIsTecnicosOpen(true);
+      return;
+    }
+
+    if (item === "usuarios-cadastrados") {
+      ensureVisibleContent();
+      setIsUsuariosOpen(true);
+      return;
+    }
+
+    setActiveMenuItem(isMainMenuItem(item) ? item : "dashboard");
+  };
+
+  const closeMessages = () => {
+    setIsMessagesOpen(false);
+    ensureVisibleContent();
+  };
+
+  const closeCategoriasModal = () => {
+    setIsCategoriasModalOpen(false);
+    ensureVisibleContent();
+  };
+
+  const closeTecnicosModal = () => {
+    setIsTecnicosOpen(false);
+    ensureVisibleContent();
+  };
+
+  const closeUsuariosModal = () => {
+    setIsUsuariosOpen(false);
+    ensureVisibleContent();
+  };
+
+  const closeAtribuirModal = () => {
+    setIsAtribuirOpen(false);
+    setSelectedTecnico(null);
+    ensureVisibleContent();
   };
 
   const loadDashboardData = async () => {
@@ -559,6 +616,7 @@ export default function Dashboard({
   const handleAtribuirClick = (tecnico: Usuario) => {
     setSelectedTecnico(tecnico);
     setIsTecnicosOpen(false);
+    ensureVisibleContent();
     setIsAtribuirOpen(true);
   };
 
@@ -642,7 +700,7 @@ export default function Dashboard({
     try {
       await createCategory(data);
       addToast("success", "Categoria criada com sucesso!");
-      setIsCategoriasModalOpen(false);
+      closeCategoriasModal();
       loadCategories();
       loadDashboardData();
     } catch {
@@ -662,7 +720,7 @@ export default function Dashboard({
     try {
       await updateCategory(id, data);
       addToast("success", "Categoria atualizada com sucesso!");
-      setIsCategoriasModalOpen(false);
+      closeCategoriasModal();
       loadCategories();
       loadDashboardData();
     } catch {
@@ -694,8 +752,7 @@ export default function Dashboard({
           : ticketId;
       await assignTicket(rawId, selectedTecnico.id);
       addToast("success", `Chamado atribuído a ${selectedTecnico.nome}`);
-      setIsAtribuirOpen(false);
-      setSelectedTecnico(null);
+      closeAtribuirModal();
       loadTickets();
       loadDashboardData();
     } catch {
@@ -902,12 +959,7 @@ export default function Dashboard({
 
       <Messages
         isOpen={isMessagesOpen}
-        onClose={() => {
-          setIsMessagesOpen(false);
-          if (activeMenuItem === "chat") {
-            setActiveMenuItem("dashboard");
-          }
-        }}
+        onClose={closeMessages}
         user={user}
         unreadTicketIds={unreadTicketIds}
         onTicketRead={markTicketMessagesAsRead}
@@ -916,7 +968,7 @@ export default function Dashboard({
 
       <CadastrarCategoriasModal
         isOpen={isCategoriasModalOpen}
-        onClose={() => setIsCategoriasModalOpen(false)}
+        onClose={closeCategoriasModal}
         onSubmit={handleCreateCategory}
         onUpdateCategory={handleUpdateCategory}
         categories={categories}
@@ -925,7 +977,7 @@ export default function Dashboard({
 
       <TecnicosDisponiveis
         isOpen={isTecnicosOpen}
-        onClose={() => setIsTecnicosOpen(false)}
+        onClose={closeTecnicosModal}
         tecnicos={users.filter((usuario) => usuario.tipo === "SUPORTE")}
         workloads={technicianWorkloads}
         onAtribuirClick={handleAtribuirClick}
@@ -933,7 +985,7 @@ export default function Dashboard({
 
       <UsuariosCadastrados
         isOpen={isUsuariosOpen}
-        onClose={() => setIsUsuariosOpen(false)}
+        onClose={closeUsuariosModal}
         usuarios={users}
         onRefresh={loadUsers}
       />
@@ -959,10 +1011,7 @@ export default function Dashboard({
 
       <AtribuirChamado
         isOpen={isAtribuirOpen}
-        onClose={() => {
-          setIsAtribuirOpen(false);
-          setSelectedTecnico(null);
-        }}
+        onClose={closeAtribuirModal}
         tecnico={selectedTecnico}
         chamados={newTickets}
         onAssign={handleAssignTicket}

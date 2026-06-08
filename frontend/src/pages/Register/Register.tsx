@@ -1,4 +1,4 @@
-import { User, Mail, CreditCard, Lock } from "lucide-react";
+import { ArrowRight, User, Mail, CreditCard, Lock } from "lucide-react";
 import { AuthLayout } from "../../components/auth/AuthLayout";
 import { AuthHeader } from "../../components/auth/AuthHeader";
 import { AuthInput } from "../../components/auth/AuthInput";
@@ -40,6 +40,7 @@ export default function Register({
 
       <div className="auth-form-wrapper">
         <div className="auth-title">
+          <span>Novo usuário</span>
           <h2>Criar conta</h2>
           <p>Preencha os dados para se cadastrar</p>
         </div>
@@ -53,6 +54,7 @@ export default function Register({
             name="name"
             placeholder="João Silva"
             icon={User}
+            autoComplete="name"
           />
 
           <AuthInput
@@ -61,14 +63,18 @@ export default function Register({
             name="email"
             placeholder="seu@email.com"
             icon={Mail}
+            autoComplete="email"
+            inputMode="email"
           />
 
           <AuthInput
-            label="CPF/CNPJ"
+            label="CPF"
             type="text"
             name="cpfCnpj"
             placeholder="000.000.000-00"
             icon={CreditCard}
+            inputMode="numeric"
+            required={false}
           />
 
           <AuthInput
@@ -77,10 +83,19 @@ export default function Register({
             name="password"
             placeholder="••••••••"
             icon={Lock}
+            autoComplete="new-password"
+            minLength={6}
           />
 
           <AuthButton type="submit" disabled={loading}>
-            {loading ? "Cadastrando..." : "Cadastrar"}
+            {loading ? (
+              "Cadastrando..."
+            ) : (
+              <>
+                Cadastrar
+                <ArrowRight size={18} aria-hidden="true" />
+              </>
+            )}
           </AuthButton>
         </form>
 

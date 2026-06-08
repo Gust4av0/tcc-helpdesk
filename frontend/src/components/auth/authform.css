@@ -1,61 +1,62 @@
 .auth-form-wrapper {
-  padding: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  background: #ffffff;
 }
 
 .auth-title {
-  text-align: center;
-  margin-bottom: 2rem;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.auth-title span {
+  display: inline-flex;
+  padding: 0.3rem 0.65rem;
+  color: #0f4c81;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .auth-title h2 {
-  font-size: 1.75rem; 
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.8rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  font-weight: 900;
+  margin: 0.75rem 0 0;
 }
 
 .auth-title p {
-  color: #6b7280;
-  font-size: 3rem; 
-  margin-top: 0.5rem;
-  margin-bottom: 0;
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 0.65rem 0 0;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 2rem; 
+  gap: 1.1rem;
 }
 
-
-.auth-input-label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-
-.auth-input {
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
+.auth-error {
+  padding: 0.85rem 1rem;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: -0.25rem 0 1rem;
 }
-
-
-.auth-button {
-  margin-top: 0.5rem;
-  padding: 0.85rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
-}
-
 
 .auth-footer {
   margin-top: 1.5rem;
   text-align: center;
-  font-size: 1.25rem;
-  color: #6b7280;
+  font-size: 1rem;
+  color: #64748b;
 }
 
 .auth-footer p {
@@ -63,32 +64,29 @@
 }
 
 .auth-link {
+  padding: 0;
+  color: #0f4c81;
   background: none;
   border: none;
-  color: #04157a;
-  font-weight: 500;
+  font-size: inherit;
+  font-weight: 900;
   cursor: pointer;
-  padding: 0;
   transition: color 0.2s;
-  font-size: 1.25rem;
 }
 
 .auth-link:hover {
-  color: #04157a;
+  color: #0b1727;
   text-decoration: underline;
 }
 
+.auth-link:focus-visible {
+  outline: 3px solid rgba(15, 76, 129, 0.24);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
 
-@media (min-width: 640px) {
+@media (max-width: 520px) {
   .auth-form-wrapper {
-    padding: 2.5rem;
-  }
-
-  .auth-title h2 {
-    font-size: 2rem; 
-  }
-
-  .auth-title p {
-    font-size: 1.25rem;
+    padding: 1.25rem;
   }
 }

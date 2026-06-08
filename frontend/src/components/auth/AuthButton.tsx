@@ -21,6 +21,7 @@ export function AuthButton({
       className="auth-submit-btn"
       onClick={onClick}
       disabled={disabled}
+      aria-busy={disabled}
       data-testid={testId}
     >
       {children}

@@ -1,16 +1,18 @@
-import type { LucideIcon } from 'lucide-react';
-import './authinput.css';
+import type { HTMLInputTypeAttribute, InputHTMLAttributes } from "react";
+import type { LucideIcon } from "lucide-react";
+import "./authinput.css";
 
 interface AuthInputProps {
   label: string;
-  type: string;
+  type: HTMLInputTypeAttribute;
   name: string;
   placeholder: string;
   icon: LucideIcon;
   required?: boolean;
-
-  
-  'data-testid'?: string;
+  autoComplete?: string;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  minLength?: number;
+  "data-testid"?: string;
 }
 
 export function AuthInput({
@@ -20,7 +22,10 @@ export function AuthInput({
   placeholder,
   icon: Icon,
   required = true,
-  'data-testid': testId,
+  autoComplete,
+  inputMode,
+  minLength,
+  "data-testid": testId,
 }: AuthInputProps) {
   return (
     <div className="form-group">
@@ -36,8 +41,9 @@ export function AuthInput({
           placeholder={placeholder}
           className="form-input"
           required={required}
-
-          
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          minLength={minLength}
           data-testid={testId}
         />
       </div>

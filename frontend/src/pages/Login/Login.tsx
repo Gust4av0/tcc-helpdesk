@@ -1,4 +1,4 @@
-import { Mail, Lock } from "lucide-react";
+import { ArrowRight, Mail, Lock } from "lucide-react";
 import { AuthLayout } from "../../components/auth/AuthLayout";
 import { AuthHeader } from "../../components/auth/AuthHeader";
 import { AuthInput } from "../../components/auth/AuthInput";
@@ -38,6 +38,7 @@ export default function Login({
 
       <div className="auth-form-wrapper">
         <div className="auth-title">
+          <span>Acesso seguro</span>
           <h2>Entrar no sistema</h2>
           <p>Acesse sua conta para continuar</p>
         </div>
@@ -51,6 +52,8 @@ export default function Login({
             name="email"
             placeholder="seu@email.com"
             icon={Mail}
+            autoComplete="email"
+            inputMode="email"
             data-testid="input-email"
           />
 
@@ -60,6 +63,7 @@ export default function Login({
             name="password"
             placeholder="••••••••"
             icon={Lock}
+            autoComplete="current-password"
             data-testid="input-password"
           />
 
@@ -68,7 +72,14 @@ export default function Login({
             disabled={loading}
             data-testid="login-submit-button"
           >
-            {loading ? "Acessando..." : "Entrar"}
+            {loading ? (
+              "Acessando..."
+            ) : (
+              <>
+                Entrar
+                <ArrowRight size={18} aria-hidden="true" />
+              </>
+            )}
           </AuthButton>
         </form>
 

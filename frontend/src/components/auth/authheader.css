@@ -1,19 +1,56 @@
 .auth-header {
-  background: linear-gradient(to bottom, #060606, #04157a);
-  padding: 2rem;
-  text-align: center;
+  background: #ffffff;
+}
+
+.auth-window-bar {
+  display: flex;
+  gap: 0.45rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-window-bar span {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.auth-logo {
+  padding: 1.75rem 2rem 2rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0b1727 0%, #0f4c81 100%);
+}
+
+.auth-logo span {
+  display: inline-flex;
+  padding: 0.3rem 0.65rem;
+  color: #bfdbfe;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .auth-logo h1 {
-  color: white;
-  font-size: 1.875rem;
-  font-weight: bold;
-  margin: 0;
+  color: #ffffff;
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  line-height: 1;
+  font-weight: 900;
+  margin: 0.75rem 0 0.35rem;
 }
 
 .auth-logo p {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  margin-bottom: 0;
+  color: #dbeafe;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .auth-logo {
+    padding: 1.4rem 1.25rem 1.6rem;
+  }
 }
