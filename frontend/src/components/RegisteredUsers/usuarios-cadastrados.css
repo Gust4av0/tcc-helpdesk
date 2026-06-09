@@ -151,6 +151,25 @@
   height: 1rem;
 }
 
+.usuario-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.usuario-extra span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.usuario-extra svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
 
 .usuario-badge {
   padding: 0.5rem 1rem;

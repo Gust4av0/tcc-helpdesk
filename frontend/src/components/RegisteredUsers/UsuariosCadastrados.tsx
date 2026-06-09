@@ -2,6 +2,8 @@
 import {
   User,
   Mail,
+  Phone,
+  MapPin,
   MoreVertical,
   Edit2,
   Trash2,
@@ -9,6 +11,20 @@ import {
 } from "lucide-react";
 import { useToast } from "../Toast/ToastContext";
 import { deleteUser, createUser, updateUser } from "../../services/user";
+import {
+  dateMaskToIso,
+  isBlank,
+  isValidCep,
+  isValidCpfCnpj,
+  isValidDate,
+  isValidEmail,
+  isValidPhone,
+  isStrongPassword,
+  maskCep,
+  maskCpfCnpj,
+  maskDate,
+  maskPhone,
+} from "../../utils/fieldValidation";
 import "./usuarios-cadastrados.css";
 
 interface Usuario {
@@ -16,6 +32,10 @@ interface Usuario {
   nome: string;
   email: string;
   tipo: string;
+  cpf_cnpj?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  cep?: string;
 }
 
 interface UsuarioForm {
@@ -23,6 +43,10 @@ interface UsuarioForm {
   email: string;
   senha: string;
   tipo: string;
+  cpf_cnpj: string;
+  telefone: string;
+  data_nascimento: string;
+  cep: string;
 }
 
 interface UsuariosCadastradosProps {
@@ -34,6 +58,12 @@ interface UsuariosCadastradosProps {
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+function isoToDateMask(value?: string) {
+  if (!value) return "";
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return year && month && day ? `${day}/${month}/${year}` : value;
 }
 
 export function UsuariosCadastrados({
@@ -51,6 +81,10 @@ export function UsuariosCadastrados({
     email: "",
     senha: "",
     tipo: "CLIENTE",
+    cpf_cnpj: "",
+    telefone: "",
+    data_nascimento: "",
+    cep: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const { addToast } = useToast();
@@ -108,6 +142,10 @@ export function UsuariosCadastrados({
       email: "",
       senha: "",
       tipo: "CLIENTE",
+      cpf_cnpj: "",
+      telefone: "",
+      data_nascimento: "",
+      cep: "",
     });
     setFormMode("create");
   };
@@ -125,6 +163,10 @@ export function UsuariosCadastrados({
       email: usuario.email,
       senha: "",
       tipo: usuario.tipo,
+      cpf_cnpj: usuario.cpf_cnpj ?? "",
+      telefone: usuario.telefone ?? "",
+      data_nascimento: isoToDateMask(usuario.data_nascimento),
+      cep: usuario.cep ?? "",
     });
     setShowForm(true);
     setActiveDropdown(null);
@@ -145,36 +187,103 @@ export function UsuariosCadastrados({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const maskedValue =
+      name === "cpf_cnpj"
+        ? maskCpfCnpj(value)
+        : name === "telefone"
+          ? maskPhone(value)
+          : name === "data_nascimento"
+            ? maskDate(value)
+            : name === "cep"
+              ? maskCep(value)
+              : value;
+
+    setFormData((prev) => ({ ...prev, [name]: maskedValue }));
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.tipo) {
+    if (isBlank(formData.nome) || isBlank(formData.tipo)) {
       addToast("error", "Preencha todos os campos obrigatórios");
       return;
     }
 
-    if (formMode === "create" && (!formData.email || !formData.senha)) {
-      addToast("error", "E-mail e senha são obrigatórios para novo usuário");
+    if (
+      formMode === "create" &&
+      (isBlank(formData.email) ||
+        isBlank(formData.senha) ||
+        isBlank(formData.cpf_cnpj) ||
+        isBlank(formData.telefone) ||
+        isBlank(formData.data_nascimento) ||
+        isBlank(formData.cep))
+    ) {
+      addToast("error", "Preencha todos os campos do novo usuário");
       return;
     }
+
+    if (formData.email && !isValidEmail(formData.email)) {
+      addToast("error", "Informe um e-mail válido");
+      return;
+    }
+
+    if (formMode === "create" && formData.senha.length < 6) {
+      addToast("error", "A senha precisa ter pelo menos 6 caracteres");
+      return;
+    }
+
+    if (formMode === "create" && !isStrongPassword(formData.senha)) {
+      addToast(
+        "error",
+        "A senha precisa ter 1 letra maiúscula e 1 caractere especial",
+      );
+      return;
+    }
+
+    if (formData.cpf_cnpj && !isValidCpfCnpj(formData.cpf_cnpj)) {
+      addToast("error", "Informe um CPF ou CNPJ válido");
+      return;
+    }
+
+    if (formData.telefone && !isValidPhone(formData.telefone)) {
+      addToast("error", "Informe um telefone válido com DDD");
+      return;
+    }
+
+    if (formData.data_nascimento && !isValidDate(formData.data_nascimento)) {
+      addToast("error", "Informe uma data válida no formato DD/MM/AAAA");
+      return;
+    }
+
+    if (formData.cep && !isValidCep(formData.cep)) {
+      addToast("error", "Informe um CEP válido");
+      return;
+    }
+
+    const userPayload = {
+      nome: formData.nome.trim(),
+      cpf_cnpj: formData.cpf_cnpj,
+      telefone: formData.telefone,
+      data_nascimento: formData.data_nascimento
+        ? dateMaskToIso(formData.data_nascimento)
+        : "",
+      cep: formData.cep,
+    };
 
     setIsSaving(true);
 
     try {
       if (formMode === "create") {
         await createUser({
-          nome: formData.nome,
-          email: formData.email,
+          ...userPayload,
+          email: formData.email.trim(),
           senha: formData.senha,
           tipo: formData.tipo,
         });
         addToast("success", "Usuário cadastrado com sucesso");
       } else if (selectedUser) {
         await updateUser(selectedUser.id, {
-          nome: formData.nome,
+          ...userPayload,
           tipo: formData.tipo,
         });
         addToast("success", "Usuário atualizado com sucesso");
@@ -261,6 +370,62 @@ export function UsuariosCadastrados({
                   />
                 </label>
               )}
+              <div className="usuarios-form-row">
+                <label>
+                  CPF/CNPJ
+                  <input
+                    type="text"
+                    name="cpf_cnpj"
+                    value={formData.cpf_cnpj}
+                    onChange={handleFormChange}
+                    inputMode="numeric"
+                    maxLength={18}
+                    placeholder="000.000.000-00"
+                    required={formMode === "create"}
+                  />
+                </label>
+                <label>
+                  Telefone
+                  <input
+                    type="text"
+                    name="telefone"
+                    value={formData.telefone}
+                    onChange={handleFormChange}
+                    inputMode="numeric"
+                    maxLength={15}
+                    placeholder="(00) 00000-0000"
+                    required={formMode === "create"}
+                  />
+                </label>
+              </div>
+              <div className="usuarios-form-row">
+                <label>
+                  Data
+                  <input
+                    type="text"
+                    name="data_nascimento"
+                    value={formData.data_nascimento}
+                    onChange={handleFormChange}
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="DD/MM/AAAA"
+                    required={formMode === "create"}
+                  />
+                </label>
+                <label>
+                  CEP
+                  <input
+                    type="text"
+                    name="cep"
+                    value={formData.cep}
+                    onChange={handleFormChange}
+                    inputMode="numeric"
+                    maxLength={9}
+                    placeholder="00000-000"
+                    required={formMode === "create"}
+                  />
+                </label>
+              </div>
               <label>
                 Tipo
                 <select
@@ -308,6 +473,22 @@ export function UsuariosCadastrados({
                     <Mail />
                     <span>{usuario.email}</span>
                   </div>
+                  {(usuario.telefone || usuario.cep) && (
+                    <div className="usuario-extra">
+                      {usuario.telefone && (
+                        <span>
+                          <Phone />
+                          {usuario.telefone}
+                        </span>
+                      )}
+                      {usuario.cep && (
+                        <span>
+                          <MapPin />
+                          {usuario.cep}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className={`usuario-badge ${getBadgeClass(usuario.tipo)}`}>
                   {usuario.tipo}

@@ -5,6 +5,10 @@ export interface Usuario {
   nome: string;
   email: string;
   tipo: string;
+  cpf_cnpj?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  cep?: string;
 }
 
 export async function listUsers() {
@@ -19,7 +23,14 @@ export async function deleteUser(id: number) {
 
 export async function updateUser(
   id: number,
-  data: Partial<{ nome: string; tipo: string }>,
+  data: Partial<{
+    nome: string;
+    tipo: string;
+    cpf_cnpj: string;
+    telefone: string;
+    data_nascimento: string;
+    cep: string;
+  }>,
 ) {
   return apiRequest<Usuario>(`/usuarios/${id}`, {
     method: "PUT",
@@ -43,6 +54,10 @@ export async function createUser(data: {
   email: string;
   senha: string;
   tipo: string;
+  cpf_cnpj?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  cep?: string;
 }) {
   return apiRequest<Usuario>("/usuarios", {
     method: "POST",

@@ -41,6 +41,62 @@
   gap: 1.1rem;
 }
 
+.auth-register-wrapper {
+  padding: clamp(1rem, 2vw, 1.5rem) 2rem 1.25rem;
+}
+
+.auth-register-wrapper .auth-title {
+  margin-bottom: 1rem;
+}
+
+.auth-register-wrapper .auth-title h2 {
+  font-size: clamp(1.55rem, 2.4vw, 1.9rem);
+  margin-top: 0.55rem;
+}
+
+.auth-register-wrapper .auth-title p {
+  margin-top: 0.35rem;
+}
+
+.auth-register-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.auth-register-form .form-group:first-child,
+.auth-register-form .form-group:nth-child(2),
+.auth-register-form .form-group:nth-child(3),
+.auth-register-form .form-group:last-of-type,
+.auth-register-form .auth-submit-btn {
+  grid-column: 1 / -1;
+}
+
+.auth-register-form .form-group {
+  gap: 0.32rem;
+}
+
+.auth-register-form .form-group label {
+  font-size: 0.86rem;
+}
+
+.auth-register-form .input-wrapper,
+.auth-register-form .form-input,
+.auth-register-form .auth-submit-btn {
+  min-height: 2.65rem;
+}
+
+.auth-register-form .form-input {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  font-size: 0.88rem;
+}
+
+.auth-register-wrapper .auth-footer {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+}
+
 .auth-error {
   padding: 0.85rem 1rem;
   color: #991b1b;
@@ -88,5 +144,14 @@
 @media (max-width: 520px) {
   .auth-form-wrapper {
     padding: 1.25rem;
+  }
+
+  .auth-register-form {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-register-form .form-group,
+  .auth-register-form .auth-submit-btn {
+    grid-column: 1 / -1;
   }
 }

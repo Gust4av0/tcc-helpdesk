@@ -5,6 +5,10 @@ export interface AuthUser {
   nome: string;
   email: string;
   tipo: string;
+  cpf_cnpj?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  cep?: string;
 }
 
 export interface LoginResponse {
@@ -26,6 +30,10 @@ export async function register(data: {
   name: string;
   email: string;
   password: string;
+  cpfCnpj: string;
+  telefone: string;
+  dataNascimento: string;
+  cep: string;
 }) {
   return apiRequest<AuthUser>("/auth/register", {
     method: "POST",
@@ -33,6 +41,10 @@ export async function register(data: {
       nome: data.name,
       email: data.email,
       senha: data.password,
+      cpf_cnpj: data.cpfCnpj,
+      telefone: data.telefone,
+      data_nascimento: data.dataNascimento,
+      cep: data.cep,
     },
   });
 }

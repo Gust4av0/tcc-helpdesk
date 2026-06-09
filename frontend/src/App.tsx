@@ -46,6 +46,10 @@ export default function App() {
     name: string;
     email: string;
     password: string;
+    cpfCnpj: string;
+    telefone: string;
+    dataNascimento: string;
+    cep: string;
   }) => {
     setError(null);
     setLoading(true);

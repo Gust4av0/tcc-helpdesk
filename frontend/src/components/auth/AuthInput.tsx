@@ -8,10 +8,14 @@ interface AuthInputProps {
   name: string;
   placeholder: string;
   icon: LucideIcon;
+  value?: string;
   required?: boolean;
   autoComplete?: string;
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  onChange?: InputHTMLAttributes<HTMLInputElement>["onChange"];
   "data-testid"?: string;
 }
 
@@ -21,10 +25,14 @@ export function AuthInput({
   name,
   placeholder,
   icon: Icon,
+  value,
   required = true,
   autoComplete,
   inputMode,
   minLength,
+  maxLength,
+  pattern,
+  onChange,
   "data-testid": testId,
 }: AuthInputProps) {
   return (
@@ -40,10 +48,14 @@ export function AuthInput({
           type={type}
           placeholder={placeholder}
           className="form-input"
+          value={value}
           required={required}
           autoComplete={autoComplete}
           inputMode={inputMode}
           minLength={minLength}
+          maxLength={maxLength}
+          pattern={pattern}
+          onChange={onChange}
           data-testid={testId}
         />
       </div>

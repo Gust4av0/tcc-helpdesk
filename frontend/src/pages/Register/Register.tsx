@@ -1,13 +1,45 @@
-import { ArrowRight, User, Mail, CreditCard, Lock } from "lucide-react";
+import { useState } from "react";
+import {
+  ArrowRight,
+  User,
+  Mail,
+  CreditCard,
+  Lock,
+  Phone,
+  Calendar,
+  MapPin,
+} from "lucide-react";
 import { AuthLayout } from "../../components/auth/AuthLayout";
 import { AuthHeader } from "../../components/auth/AuthHeader";
 import { AuthInput } from "../../components/auth/AuthInput";
 import { AuthButton } from "../../components/auth/AuthButton";
+import {
+  dateMaskToIso,
+  isBlank,
+  isValidCep,
+  isValidCpfCnpj,
+  isValidDate,
+  isValidEmail,
+  isValidPhone,
+  isStrongPassword,
+  maskCep,
+  maskCpfCnpj,
+  maskDate,
+  maskPhone,
+} from "../../utils/fieldValidation";
 import "../../components/auth/authform.css";
 
 interface RegisterProps {
   onNavigateToLogin?: () => void;
-  onSubmit?: (data: { name: string; email: string; password: string }) => void;
+  onSubmit?: (data: {
+    name: string;
+    email: string;
+    password: string;
+    cpfCnpj: string;
+    telefone: string;
+    dataNascimento: string;
+    cep: string;
+  }) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -18,14 +50,86 @@ export default function Register({
   loading = false,
   error,
 }: RegisterProps) {
+  const [formValues, setFormValues] = useState({
+    cpfCnpj: "",
+    telefone: "",
+    dataNascimento: "",
+    cep: "",
+  });
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const cpfCnpj = formValues.cpfCnpj.trim();
+    const telefone = formValues.telefone.trim();
+    const dataNascimento = formValues.dataNascimento.trim();
+    const cep = formValues.cep.trim();
+
+    if (
+      isBlank(name) ||
+      isBlank(email) ||
+      isBlank(password) ||
+      isBlank(cpfCnpj) ||
+      isBlank(telefone) ||
+      isBlank(dataNascimento) ||
+      isBlank(cep)
+    ) {
+      setValidationError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setValidationError("Informe um e-mail válido.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setValidationError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      setValidationError(
+        "A senha precisa ter 1 letra maiúscula e 1 caractere especial.",
+      );
+      return;
+    }
+
+    if (cpfCnpj && !isValidCpfCnpj(cpfCnpj)) {
+      setValidationError("Informe um CPF ou CNPJ válido.");
+      return;
+    }
+
+    if (telefone && !isValidPhone(telefone)) {
+      setValidationError("Informe um telefone válido com DDD.");
+      return;
+    }
+
+    if (dataNascimento && !isValidDate(dataNascimento)) {
+      setValidationError("Informe uma data válida no formato DD/MM/AAAA.");
+      return;
+    }
+
+    if (cep && !isValidCep(cep)) {
+      setValidationError("Informe um CEP válido.");
+      return;
+    }
+
     const data = {
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
+      name,
+      email,
+      password,
+      cpfCnpj,
+      telefone,
+      dataNascimento: dataNascimento ? dateMaskToIso(dataNascimento) : "",
+      cep,
     };
+
+    setValidationError(null);
 
     if (onSubmit) {
       onSubmit(data);
@@ -36,18 +140,20 @@ export default function Register({
 
   return (
     <AuthLayout>
-      <AuthHeader />
+      <AuthHeader compact />
 
-      <div className="auth-form-wrapper">
+      <div className="auth-form-wrapper auth-register-wrapper">
         <div className="auth-title">
           <span>Novo usuário</span>
           <h2>Criar conta</h2>
           <p>Preencha os dados para se cadastrar</p>
         </div>
 
-        {error && <p className="auth-error">{error}</p>}
+        {(error || validationError) && (
+          <p className="auth-error">{validationError ?? error}</p>
+        )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form auth-register-form" onSubmit={handleSubmit}>
           <AuthInput
             label="Nome completo"
             type="text"
@@ -68,13 +174,71 @@ export default function Register({
           />
 
           <AuthInput
-            label="CPF"
+            label="CPF ou CNPJ"
             type="text"
             name="cpfCnpj"
-            placeholder="000.000.000-00"
+            placeholder="000.000.000-00 ou 00.000.000/0000-00"
             icon={CreditCard}
             inputMode="numeric"
-            required={false}
+            value={formValues.cpfCnpj}
+            maxLength={18}
+            onChange={(event) =>
+              setFormValues((prev) => ({
+                ...prev,
+                cpfCnpj: maskCpfCnpj(event.target.value),
+              }))
+            }
+          />
+
+          <AuthInput
+            label="Telefone"
+            type="text"
+            name="telefone"
+            placeholder="(00) 00000-0000"
+            icon={Phone}
+            inputMode="numeric"
+            value={formValues.telefone}
+            maxLength={15}
+            onChange={(event) =>
+              setFormValues((prev) => ({
+                ...prev,
+                telefone: maskPhone(event.target.value),
+              }))
+            }
+          />
+
+          <AuthInput
+            label="Data de nascimento"
+            type="text"
+            name="dataNascimento"
+            placeholder="DD/MM/AAAA"
+            icon={Calendar}
+            inputMode="numeric"
+            value={formValues.dataNascimento}
+            maxLength={10}
+            onChange={(event) =>
+              setFormValues((prev) => ({
+                ...prev,
+                dataNascimento: maskDate(event.target.value),
+              }))
+            }
+          />
+
+          <AuthInput
+            label="CEP"
+            type="text"
+            name="cep"
+            placeholder="00000-000"
+            icon={MapPin}
+            inputMode="numeric"
+            value={formValues.cep}
+            maxLength={9}
+            onChange={(event) =>
+              setFormValues((prev) => ({
+                ...prev,
+                cep: maskCep(event.target.value),
+              }))
+            }
           />
 
           <AuthInput

@@ -26,6 +26,22 @@ const Usuario = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: "CLIENTE",
     },
+    cpf_cnpj: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    telefone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    data_nascimento: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    cep: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "usuarios",
