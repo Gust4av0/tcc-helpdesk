@@ -40,6 +40,7 @@ export function CadastrarCategoriasModal({
     slaAtendimento: "",
     slaResolucao: "",
   });
+
   const [editingCategory, setEditingCategory] = useState<Categoria | null>(
     null,
   );
@@ -52,7 +53,11 @@ export function CadastrarCategoriasModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,10 +82,11 @@ export function CadastrarCategoriasModal({
         slaAtendimento: "",
         slaResolucao: "",
       });
+
       setEditingCategory(null);
       onClose();
     } catch {
-      // Error toast is handled by the parent submit handler.
+      // Toast tratado pelo componente pai
     }
   };
 
@@ -90,6 +96,7 @@ export function CadastrarCategoriasModal({
 
   const handleEditCategory = (categoria: Categoria) => {
     setEditingCategory(categoria);
+
     setFormData({
       nome: categoria.nome,
       descricao: categoria.descricao,
@@ -101,36 +108,52 @@ export function CadastrarCategoriasModal({
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       setEditingCategory(null);
+
       setFormData({
         nome: "",
         descricao: "",
         slaAtendimento: "",
         slaResolucao: "",
       });
+
       onClose();
     }
   };
 
   return (
-    <div className="categorias-modal-overlay" onClick={handleOverlayClick}>
-      <div className="categorias-modal-container">
+    <div
+      className="categorias-modal-overlay"
+      onClick={handleOverlayClick}
+      data-testid="category-overlay"
+    >
+      <div
+        className="categorias-modal-container"
+        data-testid="category-modal"
+      >
         <div className="categorias-modal-header">
           <h2>Cadastrar Categoria</h2>
+
           <button
             onClick={onClose}
             className="categorias-modal-close-btn"
             aria-label="Fechar"
+            data-testid="categoria-close"
           >
             <X />
           </button>
         </div>
 
         <div className="categorias-modal-body">
-          <form onSubmit={handleSubmit} className="categorias-modal-form">
+          <form
+            onSubmit={handleSubmit}
+            className="categorias-modal-form"
+          >
             <div className="categorias-form-field">
               <label htmlFor="nome">Nome da Categoria</label>
+
               <div className="categorias-input-wrapper">
                 <Tag className="categorias-input-icon" />
+
                 <input
                   type="text"
                   id="nome"
@@ -139,14 +162,17 @@ export function CadastrarCategoriasModal({
                   value={formData.nome}
                   onChange={handleChange}
                   required
+                  data-testid="categoria-nome"
                 />
               </div>
             </div>
 
             <div className="categorias-form-field">
               <label htmlFor="descricao">Descrição</label>
+
               <div className="categorias-input-wrapper">
                 <FileText className="categorias-input-icon" />
+
                 <textarea
                   id="descricao"
                   name="descricao"
@@ -154,6 +180,7 @@ export function CadastrarCategoriasModal({
                   value={formData.descricao}
                   onChange={handleChange}
                   required
+                  data-testid="categoria-descricao"
                 />
               </div>
             </div>
@@ -163,8 +190,10 @@ export function CadastrarCategoriasModal({
                 <label htmlFor="slaAtendimento">
                   SLA de Atendimento (horas)
                 </label>
+
                 <div className="categorias-input-wrapper">
                   <Clock className="categorias-input-icon" />
+
                   <input
                     type="number"
                     id="slaAtendimento"
@@ -174,14 +203,19 @@ export function CadastrarCategoriasModal({
                     value={formData.slaAtendimento}
                     onChange={handleChange}
                     required
+                    data-testid="categoria-sla-atendimento"
                   />
                 </div>
               </div>
 
               <div className="categorias-form-field">
-                <label htmlFor="slaResolucao">SLA de Resolução (horas)</label>
+                <label htmlFor="slaResolucao">
+                  SLA de Resolução (horas)
+                </label>
+
                 <div className="categorias-input-wrapper">
                   <Clock className="categorias-input-icon" />
+
                   <input
                     type="number"
                     id="slaResolucao"
@@ -191,6 +225,7 @@ export function CadastrarCategoriasModal({
                     value={formData.slaResolucao}
                     onChange={handleChange}
                     required
+                    data-testid="categoria-sla-resolucao"
                   />
                 </div>
               </div>
@@ -201,19 +236,27 @@ export function CadastrarCategoriasModal({
                 type="button"
                 onClick={() => {
                   setEditingCategory(null);
+
                   setFormData({
                     nome: "",
                     descricao: "",
                     slaAtendimento: "",
                     slaResolucao: "",
                   });
+
                   onClose();
                 }}
                 className="categorias-modal-btn-cancel"
+                data-testid="categoria-cancel"
               >
                 Cancelar
               </button>
-              <button type="submit" className="categorias-modal-btn-submit">
+
+              <button
+                type="submit"
+                className="categorias-modal-btn-submit"
+                data-testid="categoria-submit"
+              >
                 {editingCategory
                   ? "Atualizar Categoria"
                   : "Cadastrar Categoria"}
@@ -224,31 +267,46 @@ export function CadastrarCategoriasModal({
           {categories && categories.length > 0 && (
             <div className="categorias-existing-list">
               <h3>Categorias cadastradas</h3>
+
               <div className="categorias-list">
                 {categories.map((categoria) => (
-                  <div key={categoria.id} className="categorias-item">
+                  <div
+                    key={categoria.id}
+                    className="categorias-item"
+                  >
                     <div className="categorias-item-info">
                       <strong>{categoria.nome}</strong>
+
                       <p>{categoria.descricao}</p>
+
                       <div className="categorias-item-sla">
                         <span>
                           SLA atendimento: {categoria.sla_atendimento}h
                         </span>
-                        <span>SLA resolução: {categoria.sla_resolucao}h</span>
+
+                        <span>
+                          SLA resolução: {categoria.sla_resolucao}h
+                        </span>
                       </div>
                     </div>
+
                     <div className="categorias-item-actions">
                       <button
                         type="button"
                         className="categorias-item-edit"
                         onClick={() => handleEditCategory(categoria)}
+                        data-testid={`editar-categoria-${categoria.id}`}
                       >
                         <Edit3 /> Editar
                       </button>
+
                       <button
                         type="button"
                         className="categorias-item-delete"
-                        onClick={() => handleDeleteCategory(categoria.id)}
+                        onClick={() =>
+                          handleDeleteCategory(categoria.id)
+                        }
+                        data-testid={`excluir-categoria-${categoria.id}`}
                       >
                         <Trash2 /> Excluir
                       </button>

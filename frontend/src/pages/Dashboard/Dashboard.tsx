@@ -823,6 +823,7 @@ export default function Dashboard({
 
                   {(user?.tipo === "ADMIN" || user?.tipo === "CLIENTE") && (
                     <button
+                      data-testid="open-ticket-button"
                       className="app-new-ticket-btn"
                       onClick={() => setIsModalOpen(true)}
                       disabled={!hasCategories}
