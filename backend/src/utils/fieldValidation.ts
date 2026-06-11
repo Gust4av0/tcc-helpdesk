@@ -118,7 +118,7 @@ export function validateUserFields(data: {
   }
 
   if (data.cpf_cnpj && !isValidCpfCnpj(data.cpf_cnpj)) {
-    return "CPF/CNPJ inválido";
+    return "CPF/CNPJ inválido ou inexistente";
   }
 
   if (data.telefone && !isValidPhone(data.telefone)) {

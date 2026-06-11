@@ -10,6 +10,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { useToast } from "../Toast/ToastContext";
+import { PasswordVisibilityButton } from "../auth/PasswordVisibilityButton";
 import { deleteUser, createUser, updateUser } from "../../services/user";
 import {
   dateMaskToIso,
@@ -76,6 +77,7 @@ export function UsuariosCadastrados({
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<UsuarioForm>({
     nome: "",
     email: "",
@@ -137,6 +139,7 @@ export function UsuariosCadastrados({
 
   const resetForm = () => {
     setSelectedUser(null);
+    setShowPassword(false);
     setFormData({
       nome: "",
       email: "",
@@ -241,7 +244,7 @@ export function UsuariosCadastrados({
     }
 
     if (formData.cpf_cnpj && !isValidCpfCnpj(formData.cpf_cnpj)) {
-      addToast("error", "Informe um CPF ou CNPJ válido");
+      addToast("error", "Informe um CPF ou CNPJ válido e existente");
       return;
     }
 
@@ -361,13 +364,20 @@ export function UsuariosCadastrados({
               {formMode === "create" && (
                 <label>
                   Senha
-                  <input
-                    type="password"
-                    name="senha"
-                    value={formData.senha}
-                    onChange={handleFormChange}
-                    required
-                  />
+                  <div className="usuarios-password-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="senha"
+                      value={formData.senha}
+                      onChange={handleFormChange}
+                      required
+                    />
+                    <PasswordVisibilityButton
+                      className="usuarios-input-action"
+                      isVisible={showPassword}
+                      onToggle={() => setShowPassword((value) => !value)}
+                    />
+                  </div>
                 </label>
               )}
               <div className="usuarios-form-row">

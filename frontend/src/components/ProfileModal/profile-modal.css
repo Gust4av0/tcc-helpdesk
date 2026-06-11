@@ -124,6 +124,29 @@
   font-weight: 500;
 }
 
+.profile-input-action {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color: #64748b;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.profile-input-action:hover {
+  color: #2563eb;
+  background: #eef6ff;
+}
+
+.profile-input-action svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .profile-input-disabled {
   background: #eef2f7;
 }

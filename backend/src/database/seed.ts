@@ -3,7 +3,7 @@ import Categoria from "../models/Categoria";
 import bcrypt from "bcryptjs";
 
 export const seed = async () => {
-  const senha = await bcrypt.hash("123456", 10);
+  const senha = await bcrypt.hash("Helpdesk*", 10);
 
   await Usuario.findOrCreate({
     where: { email: "admin@helpdesk.com" },

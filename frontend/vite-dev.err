@@ -1,0 +1,5 @@
+[33m[vite:css] C:\Users\Home\Documents\Projeto Faculdade\tcc-helpdesk\frontend\src\styles\fonts.css is empty
+1  |  @import './fonts.css';
+   |  ^^^^^^^^^^^^^^^^^^^^^^
+2  |  @import './theme.css';
+3  |  [39m

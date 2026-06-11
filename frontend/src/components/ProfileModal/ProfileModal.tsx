@@ -3,6 +3,7 @@ import { Lock, Mail, Save, User, X } from "lucide-react";
 import { AuthUser } from "../../services/auth";
 import { updateProfile } from "../../services/user";
 import { useToast } from "../Toast/ToastContext";
+import { PasswordVisibilityButton } from "../auth/PasswordVisibilityButton";
 import "./profile-modal.css";
 
 interface ProfileModalProps {
@@ -26,6 +27,8 @@ export function ProfileModal({
   const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -33,6 +36,8 @@ export function ProfileModal({
       setNome(user.nome);
       setSenha("");
       setConfirmarSenha("");
+      setShowSenha(false);
+      setShowConfirmarSenha(false);
     }
   }, [user, isOpen]);
 
@@ -123,10 +128,15 @@ export function ProfileModal({
               <div className="profile-input-wrapper">
                 <Lock />
                 <input
-                  type="password"
+                  type={showSenha ? "text" : "password"}
                   value={senha}
                   onChange={(event) => setSenha(event.target.value)}
                   placeholder="Deixe em branco para manter"
+                />
+                <PasswordVisibilityButton
+                  className="profile-input-action"
+                  isVisible={showSenha}
+                  onToggle={() => setShowSenha((value) => !value)}
                 />
               </div>
             </label>
@@ -136,10 +146,15 @@ export function ProfileModal({
               <div className="profile-input-wrapper">
                 <Lock />
                 <input
-                  type="password"
+                  type={showConfirmarSenha ? "text" : "password"}
                   value={confirmarSenha}
                   onChange={(event) => setConfirmarSenha(event.target.value)}
                   placeholder="Repita a nova senha"
+                />
+                <PasswordVisibilityButton
+                  className="profile-input-action"
+                  isVisible={showConfirmarSenha}
+                  onToggle={() => setShowConfirmarSenha((value) => !value)}
                 />
               </div>
             </label>

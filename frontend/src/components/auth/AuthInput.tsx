@@ -1,4 +1,8 @@
-import type { HTMLInputTypeAttribute, InputHTMLAttributes } from "react";
+import type {
+  HTMLInputTypeAttribute,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
 import type { LucideIcon } from "lucide-react";
 import "./authinput.css";
 
@@ -15,6 +19,7 @@ interface AuthInputProps {
   minLength?: number;
   maxLength?: number;
   pattern?: string;
+  endAdornment?: ReactNode;
   onChange?: InputHTMLAttributes<HTMLInputElement>["onChange"];
   "data-testid"?: string;
 }
@@ -32,6 +37,7 @@ export function AuthInput({
   minLength,
   maxLength,
   pattern,
+  endAdornment,
   onChange,
   "data-testid": testId,
 }: AuthInputProps) {
@@ -47,7 +53,7 @@ export function AuthInput({
           name={name}
           type={type}
           placeholder={placeholder}
-          className="form-input"
+          className={`form-input${endAdornment ? " form-input-with-action" : ""}`}
           value={value}
           required={required}
           autoComplete={autoComplete}
@@ -58,6 +64,8 @@ export function AuthInput({
           onChange={onChange}
           data-testid={testId}
         />
+
+        {endAdornment}
       </div>
     </div>
   );

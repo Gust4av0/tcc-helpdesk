@@ -40,6 +40,34 @@
     box-shadow 0.2s;
 }
 
+.form-input-with-action {
+  padding-right: 3.25rem;
+}
+
+.input-action {
+  position: absolute;
+  right: 0.8rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color: #64748b;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.input-action:hover {
+  color: #0f4c81;
+  background: #eef6ff;
+}
+
+.input-action svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 .form-input::placeholder {
   color: #94a3b8;
 }

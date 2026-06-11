@@ -13,6 +13,7 @@ import { AuthLayout } from "../../components/auth/AuthLayout";
 import { AuthHeader } from "../../components/auth/AuthHeader";
 import { AuthInput } from "../../components/auth/AuthInput";
 import { AuthButton } from "../../components/auth/AuthButton";
+import { PasswordVisibilityButton } from "../../components/auth/PasswordVisibilityButton";
 import {
   dateMaskToIso,
   isBlank,
@@ -56,6 +57,8 @@ export default function Register({
     dataNascimento: "",
     cep: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,6 +67,7 @@ export default function Register({
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
     const cpfCnpj = formValues.cpfCnpj.trim();
     const telefone = formValues.telefone.trim();
     const dataNascimento = formValues.dataNascimento.trim();
@@ -73,6 +77,7 @@ export default function Register({
       isBlank(name) ||
       isBlank(email) ||
       isBlank(password) ||
+      isBlank(confirmPassword) ||
       isBlank(cpfCnpj) ||
       isBlank(telefone) ||
       isBlank(dataNascimento) ||
@@ -99,8 +104,13 @@ export default function Register({
       return;
     }
 
+    if (password !== confirmPassword) {
+      setValidationError("As senhas nÃ£o conferem.");
+      return;
+    }
+
     if (cpfCnpj && !isValidCpfCnpj(cpfCnpj)) {
-      setValidationError("Informe um CPF ou CNPJ válido.");
+      setValidationError("Informe um CPF ou CNPJ válido e existente.");
       return;
     }
 
@@ -243,12 +253,34 @@ export default function Register({
 
           <AuthInput
             label="Senha"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="password"
             placeholder="••••••••"
             icon={Lock}
             autoComplete="new-password"
             minLength={6}
+            endAdornment={
+              <PasswordVisibilityButton
+                isVisible={showPassword}
+                onToggle={() => setShowPassword((value) => !value)}
+              />
+            }
+          />
+
+          <AuthInput
+            label="Confirmar senha"
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            placeholder="Repita a senha"
+            icon={Lock}
+            autoComplete="new-password"
+            minLength={6}
+            endAdornment={
+              <PasswordVisibilityButton
+                isVisible={showConfirmPassword}
+                onToggle={() => setShowConfirmPassword((value) => !value)}
+              />
+            }
           />
 
           <AuthButton type="submit" disabled={loading}>

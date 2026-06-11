@@ -259,6 +259,41 @@
   background: #eef2f7;
 }
 
+.usuarios-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.usuarios-password-wrapper input {
+  width: 100%;
+  padding-right: 3rem;
+}
+
+.usuarios-input-action {
+  position: absolute;
+  right: 0.55rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color: #64748b;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.usuarios-input-action:hover {
+  color: #2563eb;
+  background: #eef6ff;
+}
+
+.usuarios-input-action svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .usuarios-field-hint {
   color: #64748b;
   font-size: 0.75rem;

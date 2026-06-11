@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { ArrowRight, Mail, Lock } from "lucide-react";
 import { AuthLayout } from "../../components/auth/AuthLayout";
 import { AuthHeader } from "../../components/auth/AuthHeader";
 import { AuthInput } from "../../components/auth/AuthInput";
 import { AuthButton } from "../../components/auth/AuthButton";
+import { PasswordVisibilityButton } from "../../components/auth/PasswordVisibilityButton";
 import "../../components/auth/authform.css";
 
 interface LoginProps {
@@ -18,6 +20,8 @@ export default function Login({
   loading = false,
   error,
 }: LoginProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -59,12 +63,18 @@ export default function Login({
 
           <AuthInput
             label="Senha"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="password"
             placeholder="••••••••"
             icon={Lock}
             autoComplete="current-password"
             data-testid="input-password"
+            endAdornment={
+              <PasswordVisibilityButton
+                isVisible={showPassword}
+                onToggle={() => setShowPassword((value) => !value)}
+              />
+            }
           />
 
           <AuthButton
