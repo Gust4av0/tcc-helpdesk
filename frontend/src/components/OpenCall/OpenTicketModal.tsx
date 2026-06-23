@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./open-ticket-modal.css";
 
 interface OpenTicketModalProps {
@@ -11,6 +11,12 @@ interface OpenTicketModalProps {
     sla_atendimento?: number;
     sla_resolucao?: number;
   }[];
+  initialData?: {
+    title?: string;
+    description?: string;
+    category?: string;
+    priority?: string;
+  };
   onSubmit?: (data: {
     title: string;
     description: string;
@@ -47,6 +53,7 @@ export function OpenTicketModal({
   onClose,
   onSubmit,
   categories,
+  initialData,
 }: OpenTicketModalProps) {
   const [formData, setFormData] = useState({
     title: "",
@@ -54,6 +61,17 @@ export function OpenTicketModal({
     category: "",
     priority: "",
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        title: initialData?.title || "",
+        description: initialData?.description || "",
+        category: initialData?.category || "",
+        priority: initialData?.priority || "",
+      });
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -159,6 +177,7 @@ export function OpenTicketModal({
                   </option>
                 ))}
               </select>
+
               {selectedCategory && (
                 <small className="category-sla-preview">
                   Atendimento em até {selectedCategory.sla_atendimento ?? "-"}h
@@ -179,6 +198,7 @@ export function OpenTicketModal({
                 hidden
                 data-testid="select-priority"
               />
+
               <div className="priority-options">
                 {priorities.map((priority) => (
                   <button

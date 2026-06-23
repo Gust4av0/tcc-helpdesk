@@ -18,7 +18,7 @@ describe('Excluir Categoria', () => {
       .type('admin@helpdesk.com', { delay: 100 });
 
     cy.get('[data-testid="input-password"]')
-      .type('123456', { delay: 100 });
+      .type('Helpdesk*', { delay: 100 });
 
     cy.wait(1000);
 

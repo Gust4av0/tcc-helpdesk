@@ -11,6 +11,7 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  Bot,
 } from "lucide-react";
 import { AuthUser } from "../../services/auth";
 import "./sidebar.css";
@@ -170,6 +171,19 @@ export function Sidebar({
           })}
         </ul>
       </nav>
+       <div className="sidebar-ai-section">
+           <button
+            onClick={() => onItemClick("ia-suporte")}
+             className={`sidebar-menu-button ${
+            activeItem === "ia-suporte" ? "active" : ""
+         }`}
+            data-testid="sidebar-ia-suporte"
+             title="IA Suporte"
+         >
+          <Bot />
+           <span>IA Suporte</span>
+          </button>
+       </div>
     </aside>
   );
 }

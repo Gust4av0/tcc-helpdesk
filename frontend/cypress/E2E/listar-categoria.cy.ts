@@ -11,7 +11,7 @@ describe('Listar Categorias', () => {
     cy.get('[data-testid="input-email"]').type('admin@helpdesk.com');
 
     // Preenche senha do administrador
-    cy.get('[data-testid="input-password"]').type('123456');
+    cy.get('[data-testid="input-password"]').type('Helpdesk*');
 
     // Realiza login
     cy.get('[data-testid="login-submit-button"]').click();

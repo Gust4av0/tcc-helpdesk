@@ -21,6 +21,8 @@ import { MeusChamados } from "../../components/MyCallings/MeusChamados";
 
 import { useToast } from "../../components/Toast/ToastContext";
 
+import { AIAssistant } from "../AIAssistant/AIAssistant";
+
 import {
   Ticket as TicketIcon,
   Users,
@@ -55,7 +57,7 @@ import { AuthUser } from "../../services/auth";
 import "./Dashboard.css";
 
 const MESSAGE_SUMMARY_POLL_MS = 10000;
-const MAIN_MENU_ITEMS = ["dashboard", "meus-chamados"] as const;
+const MAIN_MENU_ITEMS = ["dashboard", "meus-chamados", "ia-suporte"] as const;
 
 function isMainMenuItem(item: string) {
   return MAIN_MENU_ITEMS.includes(item as (typeof MAIN_MENU_ITEMS)[number]);
@@ -98,6 +100,12 @@ export default function Dashboard({
   const [searchTerm, setSearchTerm] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [ticketInitialData, setTicketInitialData] = useState<{
+    title?: string;
+    description?: string;
+    category?: string;
+    priority?: string;
+  } | null>(null);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
 
   const [isCategoriasModalOpen, setIsCategoriasModalOpen] = useState(false);
@@ -630,6 +638,17 @@ export default function Dashboard({
     loadDashboardData();
   };
 
+  const handleOpenTicketFromIA = (description: string) => {
+    setTicketInitialData({
+      title: "Problema relatado pela IA",
+      description,
+      category: "",
+      priority: "Média",
+    });
+
+    setIsModalOpen(true);
+  };
+
   const handleOpenTicket = async (data: {
     title: string;
     description: string;
@@ -684,6 +703,7 @@ export default function Dashboard({
 
       addToast("success", "Chamado aberto com sucesso!");
       setIsModalOpen(false);
+      setTicketInitialData(null);
       loadTickets();
       loadDashboardData();
     } catch {
@@ -825,7 +845,10 @@ export default function Dashboard({
                     <button
                       data-testid="open-ticket-button"
                       className="app-new-ticket-btn"
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => {
+                        setTicketInitialData(null);
+                        setIsModalOpen(true);
+                      }}
                       disabled={!hasCategories}
                     >
                       <Plus />
@@ -947,15 +970,25 @@ export default function Dashboard({
                 onTicketChanged={refreshTicketsAndMetrics}
               />
             )}
+            {activeMenuItem === "ia-suporte" && (
+              <AIAssistant
+                user={user}
+                onOpenTicket={handleOpenTicketFromIA}
+              />
+            )}
           </div>
         </main>
       </div>
 
       <OpenTicketModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setTicketInitialData(null);
+        }}
         onSubmit={handleOpenTicket}
         categories={categories}
+        initialData={ticketInitialData || undefined}
       />
 
       <Messages

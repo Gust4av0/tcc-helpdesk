@@ -7,7 +7,7 @@ describe('Editar Categoria', () => {
     cy.get('[data-testid="home-login-button"]').click();
 
     cy.get('[data-testid="input-email"]').type('admin@helpdesk.com');
-    cy.get('[data-testid="input-password"]').type('123456');
+    cy.get('[data-testid="input-password"]').type('Helpdesk*');
 
     cy.get('[data-testid="login-submit-button"]').click();
 

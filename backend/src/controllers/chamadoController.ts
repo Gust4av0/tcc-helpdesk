@@ -4,6 +4,7 @@ import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
 import Usuario from "../models/Usuario";
 import { registrarLog } from "../utils/logChamado";
+import { enviarMensagemWhatsApp } from "../service/whatsappService";
 
 // CRIAR CHAMADO
 export const criarChamado = async (req: any, res: Response) => {
@@ -27,6 +28,7 @@ export const criarChamado = async (req: any, res: Response) => {
     }
 
     const categoria = await Categoria.findByPk(categoria_id);
+
     if (!categoria) {
       return res.status(404).json({ erro: "Categoria nao encontrada" });
     }
@@ -62,10 +64,17 @@ export const criarChamado = async (req: any, res: Response) => {
       descricao: `Chamado "${titulo}" criado`,
     });
 
+    const cliente = await Usuario.findByPk(req.usuario.id);
+
+    await enviarMensagemWhatsApp(
+      cliente?.getDataValue("telefone"),
+      `Olá, ${cliente?.getDataValue("nome")}! Recebemos seu chamado "${titulo}". Nossa equipe irá analisar e enviar atualizações em breve.`,
+    );
+
     return res.status(201).json(chamado);
   } catch (error) {
     console.error("Erro ao criar chamado:", error);
-    res.status(500).json({ erro: "Erro ao criar chamado" });
+    return res.status(500).json({ erro: "Erro ao criar chamado" });
   }
 };
 
@@ -81,6 +90,7 @@ export const listarChamados = async (req: any, res: Response) => {
     const busca = String(req.query.busca ?? "").trim();
 
     const where: WhereOptions = {};
+
     const statusPermitidos = [
       "NOVO",
       "ATRIBUIDO",
@@ -88,6 +98,7 @@ export const listarChamados = async (req: any, res: Response) => {
       "FINALIZADO",
       "FECHADO",
     ];
+
     const prioridadesPermitidas = ["BAIXA", "MEDIA", "ALTA", "URGENTE"];
 
     if (status && statusPermitidos.includes(status)) {
@@ -125,14 +136,14 @@ export const listarChamados = async (req: any, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       total: result.count,
       totalPages: Math.ceil(result.count / limit),
       currentPage: page,
       data: result.rows,
     });
   } catch {
-    res.status(500).json({ erro: "Erro ao listar chamados" });
+    return res.status(500).json({ erro: "Erro ao listar chamados" });
   }
 };
 
@@ -154,9 +165,9 @@ export const buscarChamado = async (req: any, res: Response) => {
       return res.status(403).json({ erro: "Sem permissao" });
     }
 
-    res.json(chamado);
+    return res.json(chamado);
   } catch {
-    res.status(500).json({ erro: "Erro ao buscar chamado" });
+    return res.status(500).json({ erro: "Erro ao buscar chamado" });
   }
 };
 
@@ -205,7 +216,11 @@ export const atualizarChamado = async (req: any, res: Response) => {
       return res.status(400).json({ erro: "Chamado encerrado" });
     }
 
-    if (req.usuario.tipo === "CLIENTE" && nextStatus && !clienteValidandoChamado) {
+    if (
+      req.usuario.tipo === "CLIENTE" &&
+      nextStatus &&
+      !clienteValidandoChamado
+    ) {
       return res.status(403).json({
         erro: "Cliente so pode validar chamado finalizado",
       });
@@ -257,11 +272,34 @@ export const atualizarChamado = async (req: any, res: Response) => {
         acao: "ATUALIZOU",
         descricao: descricaoLog,
       });
+
+      const cliente = await Usuario.findByPk(chamado.usuario_id);
+
+      let mensagemWhatsApp = "";
+
+      if (nextStatus === "EM_ATENDIMENTO") {
+        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! O atendimento do seu chamado "${chamado.titulo}" foi iniciado. Acesse o sistema para acompanhar.`;
+      }
+
+      if (nextStatus === "FINALIZADO") {
+        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi finalizado. Acesse o sistema para visualizar a solução.`;
+      }
+
+      if (nextStatus === "FECHADO") {
+        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi fechado. Obrigado por utilizar o HelpDesk.`;
+      }
+
+      if (mensagemWhatsApp) {
+        await enviarMensagemWhatsApp(
+          cliente?.getDataValue("telefone"),
+          mensagemWhatsApp,
+        );
+      }
     }
 
-    res.json(chamado);
+    return res.json(chamado);
   } catch {
-    res.status(500).json({ erro: "Erro ao atualizar" });
+    return res.status(500).json({ erro: "Erro ao atualizar" });
   }
 };
 
@@ -285,9 +323,9 @@ export const deletarChamado = async (req: any, res: Response) => {
 
     await chamado.destroy();
 
-    res.json({ mensagem: "Excluido com sucesso" });
+    return res.json({ mensagem: "Excluido com sucesso" });
   } catch {
-    res.status(500).json({ erro: "Erro ao deletar" });
+    return res.status(500).json({ erro: "Erro ao deletar" });
   }
 };
 
@@ -333,8 +371,17 @@ export const atribuirChamado = async (req: any, res: Response) => {
       descricao: `Atribuido ao tecnico ${tecnico.getDataValue("nome")}`,
     });
 
-    res.json({ mensagem: "Atribuido com sucesso" });
+    const cliente = await Usuario.findByPk(chamado.usuario_id);
+
+    await enviarMensagemWhatsApp(
+      cliente?.getDataValue("telefone"),
+      `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi atribuído ao técnico ${tecnico.getDataValue("nome")}. Acompanhe o atendimento pelo sistema HelpDesk.`,
+    );
+
+    return res.json({
+      mensagem: "Atribuido com sucesso",
+    });
   } catch {
-    res.status(500).json({ erro: "Erro ao atribuir" });
+    return res.status(500).json({ erro: "Erro ao atribuir" });
   }
 };

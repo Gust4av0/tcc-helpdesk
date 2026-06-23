@@ -201,7 +201,7 @@ export default function Register({
           />
 
           <AuthInput
-            label="Telefone"
+            label="Telefone(Whatsapp)"
             type="text"
             name="telefone"
             placeholder="(00) 00000-0000"
