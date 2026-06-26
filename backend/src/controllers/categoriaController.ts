@@ -1,32 +1,66 @@
 import { Request, Response } from "express";
 import Categoria from "../models/Categoria";
 import sequelize from "../config/database";
+import {
+  logCategoriaSucesso,
+  logCategoriaErro,
+} from "../utils/logCategoria";
 
-// Criar com logs e lock/transação
+
 export const criarCategoria = async (req: Request, res: Response) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { nome, descricao, sla_atendimento, sla_resolucao } = req.body;
 
-    console.log(`[LOG] Iniciando criação de categoria: ${nome}`);
-
     if (!nome || nome.length < 3) {
       await transaction.rollback();
-      console.log("[LOG] Falha ao criar categoria: nome inválido");
+
+      logCategoriaErro("Falha ao criar categoria: nome inválido", {
+        Nome: nome || "Não informado",
+      });
+
       return res.status(400).json({ erro: "Nome inválido" });
     }
 
     if (!sla_atendimento || sla_atendimento <= 0) {
       await transaction.rollback();
-      console.log("[LOG] Falha ao criar categoria: SLA atendimento inválido");
+
+      logCategoriaErro("Falha ao criar categoria: SLA de atendimento inválido", {
+        Nome: nome,
+        "SLA atendimento recebido": sla_atendimento || "Não informado",
+      });
+
       return res.status(400).json({ erro: "SLA atendimento inválido" });
     }
 
     if (!sla_resolucao || sla_resolucao <= 0) {
       await transaction.rollback();
-      console.log("[LOG] Falha ao criar categoria: SLA resolução inválido");
+
+      logCategoriaErro("Falha ao criar categoria: SLA de resolução inválido", {
+        Nome: nome,
+        "SLA resolução recebido": sla_resolucao || "Não informado",
+      });
+
       return res.status(400).json({ erro: "SLA resolução inválido" });
+    }
+
+    const categoriaExistente = await Categoria.findOne({
+      where: {
+        nome,
+      },
+      transaction,
+      lock: true,
+    });
+
+    if (categoriaExistente) {
+      await transaction.rollback();
+
+      logCategoriaErro("Falha ao criar categoria: categoria já existente", {
+        Nome: nome,
+      });
+
+      return res.status(400).json({ erro: "Categoria já existente" });
     }
 
     const categoria = await Categoria.create(
@@ -36,20 +70,26 @@ export const criarCategoria = async (req: Request, res: Response) => {
         sla_atendimento,
         sla_resolucao,
       },
-      { transaction },
+      {
+        transaction,
+      },
     );
 
     await transaction.commit();
 
-    console.log(
-      `[LOG] Categoria criada com sucesso. ID: ${categoria.getDataValue("id")}`,
-    );
+    logCategoriaSucesso("Categoria criada com sucesso", {
+      ID: categoria.getDataValue("id"),
+      Nome: nome,
+      Descrição: descricao || "Não informada",
+      "SLA atendimento": `${sla_atendimento} hora(s)`,
+      "SLA resolução": `${sla_resolucao} hora(s)`,
+    });
 
     return res.status(201).json(categoria);
   } catch (error) {
     await transaction.rollback();
 
-    console.log("[LOG] Erro ao criar categoria:", error);
+    logCategoriaErro("Erro interno ao criar categoria", error);
 
     return res.status(500).json({ erro: "Erro ao criar categoria" });
   }
@@ -58,13 +98,23 @@ export const criarCategoria = async (req: Request, res: Response) => {
 // Listar
 export const listarCategorias = async (req: Request, res: Response) => {
   try {
-    console.log("[LOG] Listando categorias");
-
     const categorias = await Categoria.findAll();
+
+    const nomesCategorias = categorias.map((categoria: any) =>
+      categoria.getDataValue("nome"),
+    );
+
+    logCategoriaSucesso("Categorias listadas com sucesso", {
+      "Total de categorias": categorias.length,
+      Categorias:
+        nomesCategorias.length > 0
+          ? nomesCategorias
+          : "Nenhuma categoria cadastrada",
+    });
 
     return res.json(categorias);
   } catch (error) {
-    console.log("[LOG] Erro ao buscar categorias:", error);
+    logCategoriaErro("Erro ao listar categorias", error);
 
     return res.status(500).json({ erro: "Erro ao buscar categorias" });
   }
@@ -73,18 +123,27 @@ export const listarCategorias = async (req: Request, res: Response) => {
 // Buscar por ID
 export const buscarCategoria = async (req: Request, res: Response) => {
   try {
-    console.log(`[LOG] Buscando categoria ID: ${req.params.id}`);
-
     const categoria = await Categoria.findByPk(Number(req.params.id));
 
     if (!categoria) {
-      console.log(`[LOG] Categoria não encontrada. ID: ${req.params.id}`);
+      logCategoriaErro("Categoria não encontrada na busca por ID", {
+        ID: req.params.id,
+      });
+
       return res.status(404).json({ erro: "Categoria não encontrada" });
     }
 
+    logCategoriaSucesso("Categoria buscada com sucesso", {
+      ID: categoria.getDataValue("id"),
+      Nome: categoria.getDataValue("nome"),
+      Descrição: categoria.getDataValue("descricao") || "Não informada",
+      "SLA atendimento": `${categoria.getDataValue("sla_atendimento")} hora(s)`,
+      "SLA resolução": `${categoria.getDataValue("sla_resolucao")} hora(s)`,
+    });
+
     return res.json(categoria);
   } catch (error) {
-    console.log("[LOG] Erro ao buscar categoria:", error);
+    logCategoriaErro("Erro ao buscar categoria", error);
 
     return res.status(500).json({ erro: "Erro ao buscar categoria" });
   }
@@ -93,22 +152,41 @@ export const buscarCategoria = async (req: Request, res: Response) => {
 // Atualizar
 export const atualizarCategoria = async (req: Request, res: Response) => {
   try {
-    console.log(`[LOG] Atualizando categoria ID: ${req.params.id}`);
-
     const categoria = await Categoria.findByPk(Number(req.params.id));
 
     if (!categoria) {
-      console.log(`[LOG] Categoria não encontrada. ID: ${req.params.id}`);
+      logCategoriaErro("Falha ao atualizar categoria: categoria não encontrada", {
+        ID: req.params.id,
+      });
+
       return res.status(404).json({ erro: "Categoria não encontrada" });
     }
 
+    const dadosAnteriores = {
+      Nome: categoria.getDataValue("nome"),
+      Descrição: categoria.getDataValue("descricao") || "Não informada",
+      "SLA atendimento": `${categoria.getDataValue("sla_atendimento")} hora(s)`,
+      "SLA resolução": `${categoria.getDataValue("sla_resolucao")} hora(s)`,
+    };
+
     await categoria.update(req.body);
 
-    console.log(`[LOG] Categoria atualizada com sucesso. ID: ${req.params.id}`);
+    logCategoriaSucesso("Categoria atualizada com sucesso", {
+      ID: categoria.getDataValue("id"),
+      "Nome anterior": dadosAnteriores.Nome,
+      "Nome atualizado": categoria.getDataValue("nome"),
+      "SLA atendimento atualizado": `${categoria.getDataValue(
+        "sla_atendimento",
+      )} hora(s)`,
+      "SLA resolução atualizado": `${categoria.getDataValue(
+        "sla_resolucao",
+      )} hora(s)`,
+      "Dados enviados na atualização": req.body,
+    });
 
     return res.json(categoria);
   } catch (error) {
-    console.log("[LOG] Erro ao atualizar categoria:", error);
+    logCategoriaErro("Erro ao atualizar categoria", error);
 
     return res.status(500).json({ erro: "Erro ao atualizar categoria" });
   }
@@ -117,22 +195,31 @@ export const atualizarCategoria = async (req: Request, res: Response) => {
 // Deletar
 export const deletarCategoria = async (req: Request, res: Response) => {
   try {
-    console.log(`[LOG] Deletando categoria ID: ${req.params.id}`);
-
     const categoria = await Categoria.findByPk(Number(req.params.id));
 
     if (!categoria) {
-      console.log(`[LOG] Categoria não encontrada. ID: ${req.params.id}`);
+      logCategoriaErro("Falha ao deletar categoria: categoria não encontrada", {
+        ID: req.params.id,
+      });
+
       return res.status(404).json({ erro: "Categoria não encontrada" });
     }
 
+    const categoriaRemovida = {
+      ID: categoria.getDataValue("id"),
+      Nome: categoria.getDataValue("nome"),
+      Descrição: categoria.getDataValue("descricao") || "Não informada",
+      "SLA atendimento": `${categoria.getDataValue("sla_atendimento")} hora(s)`,
+      "SLA resolução": `${categoria.getDataValue("sla_resolucao")} hora(s)`,
+    };
+
     await categoria.destroy();
 
-    console.log(`[LOG] Categoria removida com sucesso. ID: ${req.params.id}`);
+    logCategoriaSucesso("Categoria removida com sucesso", categoriaRemovida);
 
     return res.json({ mensagem: "Categoria removida" });
   } catch (error) {
-    console.log("[LOG] Erro ao deletar categoria:", error);
+    logCategoriaErro("Erro ao deletar categoria", error);
 
     return res.status(500).json({ erro: "Erro ao deletar categoria" });
   }
