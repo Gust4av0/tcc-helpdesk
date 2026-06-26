@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Op, WhereOptions } from "sequelize";
+import { Op } from "sequelize";
 import Chamado from "../models/Chamado";
 import Categoria from "../models/Categoria";
 import Usuario from "../models/Usuario";
@@ -27,7 +27,7 @@ export const criarChamado = async (req: any, res: Response) => {
       return res.status(400).json({ erro: "Prioridade obrigatoria" });
     }
 
-    const categoria = await Categoria.findByPk(categoria_id);
+    const categoria: any = await Categoria.findByPk(categoria_id);
 
     if (!categoria) {
       return res.status(404).json({ erro: "Categoria nao encontrada" });
@@ -43,7 +43,7 @@ export const criarChamado = async (req: any, res: Response) => {
       agora.getTime() + categoria.getDataValue("sla_resolucao") * 3600000,
     );
 
-    const chamado = await Chamado.create({
+    const chamado: any = await Chamado.create({
       titulo,
       descricao,
       usuario_id: req.usuario.id,
@@ -64,7 +64,7 @@ export const criarChamado = async (req: any, res: Response) => {
       descricao: `Chamado "${titulo}" criado`,
     });
 
-    const cliente = await Usuario.findByPk(req.usuario.id);
+    const cliente: any = await Usuario.findByPk(req.usuario.id);
 
     await enviarMensagemWhatsApp(
       cliente?.getDataValue("telefone"),
@@ -78,18 +78,19 @@ export const criarChamado = async (req: any, res: Response) => {
   }
 };
 
-// LISTAR
+// LISTAR CHAMADOS
 export const listarChamados = async (req: any, res: Response) => {
   try {
     const page = Number(req.query.page) || 1;
     const rawLimit = Number(req.query.limit) || 10;
     const limit = Math.min(Math.max(rawLimit, 1), 100);
     const offset = (page - 1) * limit;
+
     const status = String(req.query.status ?? "").trim().toUpperCase();
     const prioridade = String(req.query.prioridade ?? "").trim().toUpperCase();
     const busca = String(req.query.busca ?? "").trim();
 
-    const where: WhereOptions = {};
+    const where: any = {};
 
     const statusPermitidos = [
       "NOVO",
@@ -110,17 +111,28 @@ export const listarChamados = async (req: any, res: Response) => {
     }
 
     if (busca) {
-      (where as any)[Op.or] = [
-        { titulo: { [Op.like]: `%${busca}%` } },
-        { descricao: { [Op.like]: `%${busca}%` } },
+      where[Op.or] = [
+        {
+          titulo: {
+            [Op.like]: `%${busca}%`,
+          },
+        },
+        {
+          descricao: {
+            [Op.like]: `%${busca}%`,
+          },
+        },
       ];
     }
 
-    let result;
+    let result: any;
 
     if (req.usuario.tipo === "CLIENTE") {
       result = await Chamado.findAndCountAll({
-        where: { ...where, usuario_id: req.usuario.id },
+        where: {
+          ...where,
+          usuario_id: req.usuario.id,
+        },
         include: ["usuario", "tecnico", "categoria"],
         limit,
         offset,
@@ -147,10 +159,10 @@ export const listarChamados = async (req: any, res: Response) => {
   }
 };
 
-// BUSCAR
+// BUSCAR CHAMADO
 export const buscarChamado = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.id, {
+    const chamado: any = await Chamado.findByPk(req.params.id, {
       include: ["usuario", "tecnico", "categoria"],
     });
 
@@ -171,10 +183,10 @@ export const buscarChamado = async (req: any, res: Response) => {
   }
 };
 
-// ATUALIZAR
+// ATUALIZAR CHAMADO
 export const atualizarChamado = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.id);
+    const chamado: any = await Chamado.findByPk(req.params.id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado nao encontrado" });
@@ -273,16 +285,16 @@ export const atualizarChamado = async (req: any, res: Response) => {
         descricao: descricaoLog,
       });
 
-      const cliente = await Usuario.findByPk(chamado.usuario_id);
+      const cliente: any = await Usuario.findByPk(chamado.usuario_id);
 
       let mensagemWhatsApp = "";
 
       if (nextStatus === "EM_ATENDIMENTO") {
-        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! O atendimento do seu chamado "${chamado.titulo}" foi iniciado. Acesse o sistema para acompanhar.`;
+        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! O atendimento do seu chamado "${chamado.titulo}" foi iniciado. Acesse o sistema HelpDesk para acompanhar e trocar informações diretamente com o técnico responsável.`;
       }
 
       if (nextStatus === "FINALIZADO") {
-        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi finalizado. Acesse o sistema para visualizar a solução.`;
+        mensagemWhatsApp = `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi finalizado. Acesse o sistema HelpDesk para visualizar a solução.`;
       }
 
       if (nextStatus === "FECHADO") {
@@ -303,10 +315,10 @@ export const atualizarChamado = async (req: any, res: Response) => {
   }
 };
 
-// DELETAR
+// DELETAR CHAMADO
 export const deletarChamado = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.id);
+    const chamado: any = await Chamado.findByPk(req.params.id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado nao encontrado" });
@@ -323,16 +335,18 @@ export const deletarChamado = async (req: any, res: Response) => {
 
     await chamado.destroy();
 
-    return res.json({ mensagem: "Excluido com sucesso" });
+    return res.json({
+      mensagem: "Excluido com sucesso",
+    });
   } catch {
     return res.status(500).json({ erro: "Erro ao deletar" });
   }
 };
 
-// ATRIBUIR
+// ATRIBUIR CHAMADO
 export const atribuirChamado = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.id);
+    const chamado: any = await Chamado.findByPk(req.params.id);
     const { tecnico_id } = req.body;
 
     if (!chamado) {
@@ -343,7 +357,7 @@ export const atribuirChamado = async (req: any, res: Response) => {
       return res.status(403).json({ erro: "Sem permissao" });
     }
 
-    const tecnico = await Usuario.findByPk(tecnico_id);
+    const tecnico: any = await Usuario.findByPk(tecnico_id);
 
     if (!tecnico || tecnico.getDataValue("tipo") !== "SUPORTE") {
       return res.status(400).json({ erro: "Tecnico invalido" });
@@ -371,11 +385,11 @@ export const atribuirChamado = async (req: any, res: Response) => {
       descricao: `Atribuido ao tecnico ${tecnico.getDataValue("nome")}`,
     });
 
-    const cliente = await Usuario.findByPk(chamado.usuario_id);
+    const cliente: any = await Usuario.findByPk(chamado.usuario_id);
 
     await enviarMensagemWhatsApp(
       cliente?.getDataValue("telefone"),
-      `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi atribuído ao técnico ${tecnico.getDataValue("nome")}. Acompanhe o atendimento pelo sistema HelpDesk.`,
+      `Olá, ${cliente?.getDataValue("nome")}! Seu chamado "${chamado.titulo}" foi atribuído ao ${tecnico.getDataValue("nome")}. Em breve o atendimento será iniciado e você receberá novas atualizações.`,
     );
 
     return res.json({

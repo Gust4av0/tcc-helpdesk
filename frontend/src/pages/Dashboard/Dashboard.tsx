@@ -16,7 +16,7 @@ import { UsuariosCadastrados } from "../../components/RegisteredUsers/UsuariosCa
 import { ProfileModal } from "../../components/ProfileModal/ProfileModal";
 
 import { TicketDetails } from "../../components/Tickdetails/TicketDetails";
-import { AtribuirChamado } from "../../components/AtribuirChamado";
+import { AtribuirChamado } from "../../components/AssignTicket/AtribuirChamado";
 import { MeusChamados } from "../../components/MyCallings/MeusChamados";
 
 import { useToast } from "../../components/Toast/ToastContext";

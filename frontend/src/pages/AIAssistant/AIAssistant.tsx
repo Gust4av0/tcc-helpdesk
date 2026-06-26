@@ -31,6 +31,7 @@ export function AIAssistant({ user, onOpenTicket }: AIAssistantProps) {
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [clearingHistory, setClearingHistory] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -247,31 +248,34 @@ export function AIAssistant({ user, onOpenTicket }: AIAssistantProps) {
   };
 
   const ultimaMensagemTecnicaParaChamado =
-   [...messages]
-    .reverse()
-    .filter((message) => message.role === "user")
-    .map((message) => message.content.trim())
-    .find((content) => !mensagemPareceIrrelevante(content)) || "";
+    [...messages]
+      .reverse()
+      .filter((message) => message.role === "user")
+      .map((message) => message.content.trim())
+      .find((content) => !mensagemPareceIrrelevante(content)) || "";
 
   const descricaoChamado =
-   ultimaMensagemTecnicaParaChamado || "Problema relatado pelo usuário na IA";
+    ultimaMensagemTecnicaParaChamado || "Problema relatado pelo usuário na IA";
 
   const handleOpenTicketClick = () => {
     onOpenTicket?.(descricaoChamado);
   };
 
-  const handleClearHistory = async () => {
-    const confirmar = window.confirm(
-      "Deseja realmente limpar o histórico da conversa com a IA?",
-    );
+  const handleAskClearHistory = () => {
+    setShowClearConfirm(true);
+  };
 
-    if (!confirmar) return;
+  const handleCancelClearHistory = () => {
+    setShowClearConfirm(false);
+  };
 
+  const handleConfirmClearHistory = async () => {
     setClearingHistory(true);
 
     try {
       await limparHistoricoIA();
       setMessages([mensagemInicial]);
+      setShowClearConfirm(false);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -343,13 +347,44 @@ export function AIAssistant({ user, onOpenTicket }: AIAssistantProps) {
         <button
           type="button"
           className="ai-clear-button"
-          onClick={handleClearHistory}
+          onClick={handleAskClearHistory}
           disabled={loading || loadingHistory || clearingHistory}
         >
           <Trash2 />
           {clearingHistory ? "Limpando..." : "Limpar conversa"}
         </button>
       </div>
+
+      {showClearConfirm && (
+        <div className="ai-confirm-box">
+          <div>
+            <strong>Limpar conversa?</strong>
+            <p>
+              Essa ação vai apagar todo o histórico da IA deste usuário.
+            </p>
+          </div>
+
+          <div className="ai-confirm-actions">
+            <button
+              type="button"
+              className="ai-confirm-cancel"
+              onClick={handleCancelClearHistory}
+              disabled={clearingHistory}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              className="ai-confirm-delete"
+              onClick={handleConfirmClearHistory}
+              disabled={clearingHistory}
+            >
+              {clearingHistory ? "Limpando..." : "Sim, limpar"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="ai-chat">
         {loadingHistory ? (

@@ -169,3 +169,67 @@
   width: 18px;
   height: 18px;
 }
+
+.ai-confirm-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.ai-confirm-box strong {
+  display: block;
+  color: #9a3412;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.ai-confirm-box p {
+  margin: 0;
+  color: #7c2d12;
+  font-size: 0.9rem;
+}
+
+.ai-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ai-confirm-actions button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ai-confirm-cancel {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.ai-confirm-delete {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.ai-confirm-delete:hover {
+  background: #b91c1c;
+}
+
+.ai-confirm-cancel:hover {
+  background: #f8fafc;
+}
+
+.ai-confirm-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

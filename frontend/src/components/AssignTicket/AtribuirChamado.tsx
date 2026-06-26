@@ -1,6 +1,6 @@
 ﻿import { X, AlertCircle, User, Calendar, Link } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "./Toast/ToastContext";
+import { useToast } from "../Toast/ToastContext";
 import "./atribuir-chamado.css";
 
 interface Tecnico {

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import ChamadoMensagem from "../models/ChamadoMensagem";
 import Chamado from "../models/Chamado";
 import { Op } from "sequelize";
@@ -11,7 +11,7 @@ export const criarMensagem = async (req: any, res: Response) => {
       return res.status(400).json({ erro: "Dados inválidos" });
     }
 
-    const chamado = await Chamado.findByPk(chamado_id);
+    const chamado: any = await Chamado.findByPk(chamado_id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado não encontrado" });
@@ -51,15 +51,15 @@ export const criarMensagem = async (req: any, res: Response) => {
       created_at: new Date(),
     });
 
-    res.status(201).json(msg);
+    return res.status(201).json(msg);
   } catch {
-    res.status(500).json({ erro: "Erro ao enviar" });
+    return res.status(500).json({ erro: "Erro ao enviar" });
   }
 };
 
 export const listarMensagens = async (req: any, res: Response) => {
   try {
-    const chamado = await Chamado.findByPk(req.params.chamado_id);
+    const chamado: any = await Chamado.findByPk(req.params.chamado_id);
 
     if (!chamado) {
       return res.status(404).json({ erro: "Chamado não encontrado" });
@@ -80,13 +80,15 @@ export const listarMensagens = async (req: any, res: Response) => {
     }
 
     const mensagens = await ChamadoMensagem.findAll({
-      where: { chamado_id: req.params.chamado_id },
+      where: {
+        chamado_id: req.params.chamado_id,
+      },
       order: [["id", "ASC"]],
     });
 
-    res.json(mensagens);
+    return res.json(mensagens);
   } catch {
-    res.status(500).json({ erro: "Erro ao listar" });
+    return res.status(500).json({ erro: "Erro ao listar" });
   }
 };
 
@@ -138,8 +140,8 @@ export const listarResumoMensagens = async (req: any, res: Response) => {
       });
     });
 
-    res.json(Array.from(resumoPorChamado.values()));
+    return res.json(Array.from(resumoPorChamado.values()));
   } catch {
-    res.status(500).json({ erro: "Erro ao listar resumos" });
+    return res.status(500).json({ erro: "Erro ao listar resumos" });
   }
 };
